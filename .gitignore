@@ -1,0 +1,11 @@
+.vault_pass
+*.retry
+__pycache__/
+.env
+*.pyc
+.cursor/
+configs/production/secrets/vault.yml
+configs/test/secrets/vault.yml
+.DS_Store
+.vscode/
+.subscription-acme/

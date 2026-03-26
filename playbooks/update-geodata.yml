@@ -1,0 +1,36 @@
+---
+- name: Update geodata on RU relay servers
+  hosts: ru_relays
+  become: true
+  serial: 1
+
+  vars:
+    geodata_sources:
+      - name: geosite.dat
+        url: "https://github.com/v2fly/domain-list-community/releases/latest/download/dlc.dat"
+      - name: geoip.dat
+        url: "https://github.com/v2fly/geoip/releases/latest/download/geoip.dat"
+
+  tasks:
+    - name: Download latest geodata files
+      ansible.builtin.get_url:
+        url: "{{ item.url }}"
+        dest: "{{ xray_geodata_dir }}/{{ item.name }}"
+        mode: "0644"
+        force: true
+      loop: "{{ geodata_sources }}"
+      register: geodata_download
+
+    - name: Restart Xray if geodata changed
+      community.docker.docker_compose_v2:
+        project_src: "{{ xray_config_dir }}"
+        state: present
+        recreate: always
+      when: geodata_download.changed
+
+    - name: Verify Xray is listening after restart
+      ansible.builtin.wait_for:
+        port: "{{ xray_inbound_port }}"
+        delay: 2
+        timeout: 15
+      when: geodata_download.changed

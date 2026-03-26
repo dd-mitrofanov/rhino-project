@@ -1,0 +1,16 @@
+[Unit]
+Description=Xray test server (VLESS + XHTTP + Reality, prod-like)
+Documentation=https://github.com/XTLS/Xray-core
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=root
+Environment=XRAY_LOCATION_ASSET={{ xray_geodata_dir }}
+ExecStart={{ xray_binary_path }} run -c {{ xray_config_path }}
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

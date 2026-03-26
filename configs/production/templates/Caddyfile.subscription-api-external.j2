@@ -1,0 +1,17 @@
+# HTTP/3 (QUIC) disabled: on a non-443 port it often breaks in browsers while TCP + TLS is enough for subscription GETs.
+{
+    servers {
+        protocols h1 h2
+    }
+}
+
+# HTTP-01 challenge for Let's Encrypt (same files on every relay; issued from Ansible controller).
+{{ subscription_api_domain }}:80 {
+    root * /var/www/certbot
+    file_server
+}
+
+{{ subscription_api_domain }}:{{ subscription_api_port }} {
+    reverse_proxy subscription-api:8000
+    tls /etc/caddy/certs/fullchain.pem /etc/caddy/certs/privkey.pem
+}

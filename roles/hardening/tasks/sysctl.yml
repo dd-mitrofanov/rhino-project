@@ -1,0 +1,9 @@
+---
+- name: Apply sysctl tuning
+  ansible.builtin.template:
+    src: sysctl-custom.conf.j2
+    dest: /etc/sysctl.d/99-custom.conf
+    owner: root
+    group: root
+    mode: "0644"
+  notify: reload sysctl

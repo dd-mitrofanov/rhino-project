@@ -1,0 +1,85 @@
+---
+- name: Create subscription-api directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0755"
+  loop:
+    - "{{ subscription_api_dir }}"
+    - "{{ subscription_api_dir }}/subscription-api"
+    - "{{ subscription_api_dir }}/certs"
+    - "{{ subscription_api_dir }}/certbot/www/.well-known/acme-challenge"
+
+- name: Prepare ACME account and domain keys on Ansible controller
+  ansible.builtin.import_tasks: acme-controller-keys.yml
+
+- name: Placeholder self-signed TLS for first Caddy start (replaced after Let's Encrypt)
+  ansible.builtin.command:
+    argv:
+      - openssl
+      - req
+      - -x509
+      - -nodes
+      - -newkey
+      - rsa:2048
+      - -days
+      - "1"
+      - -keyout
+      - "{{ subscription_api_dir }}/certs/privkey.pem"
+      - -out
+      - "{{ subscription_api_dir }}/certs/fullchain.pem"
+      - -subj
+      - "/CN={{ subscription_api_domain }}"
+    creates: "{{ subscription_api_dir }}/certs/fullchain.pem"
+
+- name: Install rsync for synchronize module
+  ansible.builtin.apt:
+    name: rsync
+    state: present
+    cache_valid_time: 3600
+
+- name: Sync subscription-api source
+  ansible.posix.synchronize:
+    src: "{{ playbook_dir }}/../subscription-api/"
+    dest: "{{ subscription_api_dir }}/subscription-api/"
+    delete: true
+    rsync_opts:
+      - "--exclude=__pycache__"
+      - "--exclude=*.pyc"
+
+- name: Render subscription-api environment file
+  ansible.builtin.template:
+    src: "{{ playbook_dir }}/../configs/production/templates/subscription-api-external.env.j2"
+    dest: "{{ subscription_api_dir }}/.env"
+    mode: "0600"
+
+- name: Install docker-compose for subscription-api
+  ansible.builtin.template:
+    src: "{{ playbook_dir }}/../configs/production/templates/docker-compose.subscription-api.yml.j2"
+    dest: "{{ subscription_api_dir }}/docker-compose.yml"
+    mode: "0644"
+
+- name: Render external subscription Caddyfile
+  ansible.builtin.template:
+    src: "{{ playbook_dir }}/../configs/production/templates/Caddyfile.subscription-api-external.j2"
+    dest: "{{ subscription_api_dir }}/Caddyfile"
+    mode: "0644"
+
+- name: Open UFW for ACME and subscription API HTTPS
+  community.general.ufw:
+    rule: allow
+    port: "{{ item }}"
+    proto: tcp
+  loop:
+    - "80"
+    - "{{ subscription_api_port | string }}"
+
+- name: Start subscription-api stack
+  community.docker.docker_compose_v2:
+    project_src: "{{ subscription_api_dir }}"
+    state: present
+    build: always
+  register: subscription_api_compose
+
+- name: Obtain or renew Let's Encrypt certificate and sync to all relays
+  ansible.builtin.import_tasks: acme-obtain-and-sync.yml

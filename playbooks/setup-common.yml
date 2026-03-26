@@ -1,0 +1,22 @@
+---
+- name: Common server setup
+  hosts: all
+  become: true
+
+  roles:
+    - role: docker
+    - role: hardening
+
+  post_tasks:
+    - name: Verify Docker is running
+      ansible.builtin.command: docker info
+      changed_when: false
+
+    - name: Verify UFW is active
+      ansible.builtin.command: ufw status
+      changed_when: false
+      register: ufw_status
+
+    - name: Display UFW status
+      ansible.builtin.debug:
+        var: ufw_status.stdout_lines

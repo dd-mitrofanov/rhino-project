@@ -1,0 +1,5 @@
+---
+- name: Restart subscription caddy
+  ansible.builtin.command:
+    cmd: docker compose restart caddy
+    chdir: "{{ subscription_api_dir }}"

@@ -1,0 +1,20 @@
+---
+foreign_servers:
+  - tag: nl-ams-1
+    address: "{{ vault_nl_ams_1_ip }}"
+    port: 443
+    location: amsterdam
+  - tag: de-fra-1
+    address: "{{ vault_de_fra_1_ip }}"
+    port: 443
+    location: frankfurt
+
+ru_servers:
+  - tag: ru-msk-1
+    address: "{{ vault_ru_msk_1_ip }}"
+    port: 443
+    location: moscow
+  - tag: ru-msk-2
+    address: "{{ vault_ru_msk_2_ip }}"
+    port: 443
+    location: moscow

@@ -1,0 +1,39 @@
+---
+services:
+  xray:
+    image: "{{ xray_docker_image }}:{{ xray_version }}"
+    container_name: xray
+    restart: unless-stopped
+    # Image default CMD is -confdir /usr/local/etc/xray/; override to use our templated config
+    command: ["run", "-c", "/etc/xray/config.json"]
+    # Default image user (65532) cannot bind to :443 with host networking; root in-container is required
+    user: "0:0"
+    network_mode: host
+    volumes:
+      - "{{ xray_config_dir }}/config.json:/etc/xray/config.json:ro"
+      - "{{ xray_log_dir }}:/var/log/xray"
+{% if server_role == 'ru-relay' %}
+      - "{{ xray_geodata_dir }}/geosite.dat:/usr/share/xray/geosite.dat:ro"
+      - "{{ xray_geodata_dir }}/geoip.dat:/usr/share/xray/geoip.dat:ro"
+{% endif %}
+    environment:
+      - XRAY_LOCATION_ASSET=/usr/share/xray
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  xray-exporter:
+    image: "{{ xray_exporter_image }}:{{ xray_exporter_version }}"
+    container_name: xray-exporter
+    restart: unless-stopped
+    network_mode: host
+    command: ["--xray-endpoint", "127.0.0.1:{{ xray_grpc_port }}"]
+    depends_on:
+      - xray
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"

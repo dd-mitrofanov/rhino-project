@@ -1,0 +1,6 @@
+---
+subscription_api_dir: /opt/subscription-api
+
+# Let's Encrypt production ACME v2. Override with staging for dry-runs:
+# https://acme-staging-v02.api.letsencrypt.org/directory
+subscription_api_acme_directory: "https://acme-v02.api.letsencrypt.org/directory"

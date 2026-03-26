@@ -1,0 +1,25 @@
+---
+# =============================================================================
+# Monitoring Stack — Production Configuration
+# =============================================================================
+
+# --- xray-exporter (sidecar on every Xray node) ---
+xray_exporter_image: anatolykopyl/xray-exporter
+xray_exporter_version: latest
+xray_exporter_port: 9550
+
+# --- Prometheus (de-fra-1 only) ---
+prometheus_image: prom/prometheus
+prometheus_version: latest
+prometheus_port: 9090
+
+# --- Grafana (de-fra-1 only) ---
+grafana_image: grafana/grafana
+grafana_version: latest
+grafana_port: 3000
+grafana_https_port: 8443
+
+# --- Monitoring stack paths (de-fra-1) ---
+monitoring_dir: /opt/monitoring
+monitoring_prometheus_data_dir: /opt/monitoring/prometheus-data
+monitoring_grafana_data_dir: /opt/monitoring/grafana-data

@@ -1,0 +1,4 @@
+---
+server_role: ru-relay
+xray_inbound_port: 443
+xray_template: ru-relay.json.j2

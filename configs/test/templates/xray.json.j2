@@ -1,0 +1,104 @@
+{#-
+  Test-server Xray: структура как у RU relay (configs/production/templates/ru-relay.json.j2):
+  VLESS + XHTTP + Reality, sniffing, DNS и routing с geosite/geoip (нужны dlc.dat/geoip.dat).
+  Без API-in, без balancer/foreign outbounds / observatory — только проверка whitelist по IP.
+-#}
+{
+  "log": {
+    "loglevel": "{{ xray_log_level }}",
+    "access": "{{ xray_log_access_path }}",
+    "error": "{{ xray_log_error_path }}",
+    "dnsLog": {{ xray_dns_log | to_json }}
+  },
+  "dns": {
+    "servers": [
+      {
+        "address": "localhost",
+        "domains": ["geosite:category-ru"]
+      },
+      "1.1.1.1",
+      "8.8.8.8"
+    ]
+  },
+  "inbounds": [
+    {
+      "tag": "{{ xray_inbound_tag }}",
+      "listen": "{{ xray_listen }}",
+      "port": {{ xray_port | int }},
+      "protocol": "vless",
+      "settings": {
+        "clients": [
+          {
+            "id": "{{ vless_uuid }}",
+            "flow": ""
+          }
+        ],
+        "decryption": "none"
+      },
+      "streamSettings": {
+        "network": "xhttp",
+        "xhttpSettings": {
+          "path": "{{ xhttp_path }}",
+          "mode": "{{ xhttp_mode }}"{% if xhttp_host | default('') | trim | length > 0 %},
+          "host": "{{ xhttp_host }}"{% endif %}
+        },
+        "security": "reality",
+        "realitySettings": {
+          "show": false,
+          "dest": "{{ sni_domain_default }}:443",
+          "xver": 0,
+          "serverNames": {{ sni_domains | to_json }},
+          "privateKey": "{{ vault_reality_private_key }}",
+          "shortIds": {{ xray_reality_short_ids | to_json }}
+        }
+      },
+      "sniffing": {
+        "enabled": true,
+        "destOverride": ["http", "tls", "quic"],
+        "routeOnly": {{ xray_sniffing_route_only | to_json }}
+      }
+    }
+  ],
+  "outbounds": [
+    {
+      "tag": "direct",
+      "protocol": "freedom",
+      "settings": {}
+    },
+    {
+      "tag": "blocked",
+      "protocol": "blackhole",
+      "settings": {}
+    }
+  ],
+  "routing": {
+    "domainStrategy": "IPIfNonMatch",
+    "rules": [
+      {
+        "type": "field",
+        "outboundTag": "blocked",
+        "protocol": ["bittorrent"]
+      },
+      {
+        "type": "field",
+        "outboundTag": "direct",
+        "domain": ["geosite:category-ru"]
+      },
+      {
+        "type": "field",
+        "outboundTag": "direct",
+        "domain": ["geosite:private"]
+      },
+      {
+        "type": "field",
+        "outboundTag": "direct",
+        "ip": ["geoip:ru"]
+      },
+      {
+        "type": "field",
+        "outboundTag": "direct",
+        "network": "tcp,udp"
+      }
+    ]
+  }
+}

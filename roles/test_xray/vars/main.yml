@@ -1,0 +1,3 @@
+---
+# Optional: set xray_sha256 here (hex, no prefix) to verify the release zip on download.
+# xray_sha256: ""

@@ -1,0 +1,61 @@
+---
+services:
+  prometheus:
+    image: "{{ prometheus_image }}:{{ prometheus_version }}"
+    container_name: prometheus
+    restart: unless-stopped
+    network_mode: host
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--storage.tsdb.retention.time=90d"
+      - "--web.listen-address=127.0.0.1:{{ prometheus_port }}"
+    volumes:
+      - "{{ monitoring_dir }}/prometheus.yml:/etc/prometheus/prometheus.yml:ro"
+      - "{{ monitoring_prometheus_data_dir }}:/prometheus"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  grafana:
+    image: "{{ grafana_image }}:{{ grafana_version }}"
+    container_name: grafana
+    restart: unless-stopped
+    network_mode: host
+    environment:
+      - GF_SECURITY_ADMIN_USER={{ vault_grafana_admin_user }}
+      - GF_SECURITY_ADMIN_PASSWORD={{ vault_grafana_admin_password }}
+      - GF_SERVER_HTTP_ADDR=127.0.0.1
+      - GF_SERVER_HTTP_PORT={{ grafana_port }}
+      - GF_SERVER_ROOT_URL=https://{{ vault_grafana_domain }}:{{ grafana_https_port }}
+    volumes:
+      - "{{ monitoring_grafana_data_dir }}:/var/lib/grafana"
+      - "{{ monitoring_dir }}/provisioning/datasources:/etc/grafana/provisioning/datasources:ro"
+      - "{{ monitoring_dir }}/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro"
+      - "{{ monitoring_dir }}/dashboards:/var/lib/grafana/dashboards:ro"
+    depends_on:
+      - prometheus
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: monitoring-caddy
+    restart: unless-stopped
+    network_mode: host
+    volumes:
+      - "{{ monitoring_dir }}/Caddyfile:/etc/caddy/Caddyfile:ro"
+      - "{{ monitoring_dir }}/caddy-data:/data"
+      - "{{ monitoring_dir }}/caddy-config:/config"
+    depends_on:
+      - grafana
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"

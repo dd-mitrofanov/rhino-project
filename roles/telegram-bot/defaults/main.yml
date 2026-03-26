@@ -1,0 +1,5 @@
+---
+telegram_bot_dir: /opt/telegram-bot
+telegram_bot_postgres_version: "16-alpine"
+telegram_bot_postgres_db: botdb
+telegram_bot_postgres_user: botuser

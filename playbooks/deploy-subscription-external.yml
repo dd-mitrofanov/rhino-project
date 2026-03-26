@@ -1,0 +1,32 @@
+---
+- name: Deploy external subscription API
+  hosts: subscription
+  become: true
+
+  vars_files:
+    - ../configs/production/secrets/vault.yml
+    - ../configs/production/vars/servers.yml
+
+  roles:
+    - role: subscription-api
+
+  post_tasks:
+    - name: Verify subscription-api container is running
+      ansible.builtin.command: >
+        docker ps --filter name=subscription-api --format "{% raw %}{{.Status}}{% endraw %}"
+      changed_when: false
+      register: sub_api_status
+
+    - name: Display subscription-api container status
+      ansible.builtin.debug:
+        msg: "Subscription API container: {{ sub_api_status.stdout }}"
+
+    - name: Verify Caddy container is running
+      ansible.builtin.command: >
+        docker ps --filter name=subscription-caddy --format "{% raw %}{{.Status}}{% endraw %}"
+      changed_when: false
+      register: caddy_status
+
+    - name: Display Caddy container status
+      ansible.builtin.debug:
+        msg: "Caddy container: {{ caddy_status.stdout }}"

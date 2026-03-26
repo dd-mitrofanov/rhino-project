@@ -1,0 +1,97 @@
+---
+# =============================================================================
+# Xray / Reality — Production Configuration
+# =============================================================================
+# Переменные сгруппированы по смыслу. При реальном деплое в прод обязательно
+# проверить и при необходимости изменить значения, отмеченные комментарием [DEPLOY].
+# =============================================================================
+
+# --- Версия и образ Xray ---
+xray_docker_tag: "26.2.6"
+
+# --- Логирование ---
+xray_log_level: warning
+xray_dns_log: true
+
+# --- Sniffing (vless-in) ---
+# false: подмена цели на sniffed-домен для outbound (DNS на стороне Xray); true: sniff только для routing.
+xray_sniffing_route_only: false
+
+# --- Inbound: протокол и транспорт ---
+xray_inbound_protocol: vless
+xray_transport: xhttp
+xray_xhttp_mode: packet-up
+xray_security: reality
+xray_inbound_tag: vless-in
+xray_grpc_port: 10085
+
+# --- SNI / Reality masquerade [DEPLOY] ---
+# Домены из «белого списка» для маскировки (vkvideo.ru, userapi.com и т.п.).
+# Менять при смене маскировки: выбрать домен из категории неблокируемых в РФ.
+# Клиент должен использовать SNI = один из sni_domains.
+sni_domains:
+  - api-maps.yandex.ru
+sni_domain_default: "api-maps.yandex.ru"
+
+# --- Reality shortIds [DEPLOY] ---
+# Список shortId для inbound; пустая строка — допустима. short_id клиента должен
+# совпадать с одним из них. Менять при компрометации или для изоляции конфигов.
+xray_reality_short_ids:
+  - ""
+  - "8b5be691c00f06ee"
+# shortId, который уходит в ссылки подписки (часто непустой для совместимости с клиентами)
+xray_subscription_short_id: "8b5be691c00f06ee"
+
+# --- Observatory (мониторинг foreign-нод) ---
+observatory_probe_url: "https://www.google.com/generate_204"
+observatory_probe_interval: "1m"
+observatory_enable_concurrency: true
+
+# --- Balancer ---
+# leastPing — почти весь трафик на узел с минимальным RTT до probe (часто nl-ams-1 с RU).
+# random — равномерное распределение по живым outbounds из selector (observatory по-прежнему шлёт пробы).
+# roundRobin — по очереди по списку foreign_servers (детерминированнее, чем random).
+balancer_strategy: roundRobin
+balancer_tag: eu-balancer
+
+# --- RU relay: VK / Mail.ru / OK / Max через один foreign exit (не direct с ru-msk-*, не eu-balancer) ---
+# Тег должен совпадать с записью в configs/production/vars/servers.yml (foreign_servers).
+ru_relay_vk_max_exit_tag: de-fra-1
+# Синтаксис Xray: domain: — суффикс, full: — точное имя.
+ru_relay_vk_max_domain_matchers:
+  # ВКонтакте / VK ID / API / CDN
+  - "domain:vk.com"
+  - "domain:vk.ru"
+  - "domain:vk.link"
+  - "domain:vk.cc"
+  - "domain:vk.me"
+  - "domain:userapi.com"
+  - "domain:vkuseraudio.net"
+  - "domain:vkuservideo.net"
+  - "domain:vkuservideo.ru"
+  - "domain:vk-cdn.net"
+  - "domain:vk-portal.net"
+  # Mail.ru / Почта / облако / игры и др. под *.mail.ru
+  - "domain:mail.ru"
+  - "domain:imgsmail.ru"
+  - "domain:attachmail.ru"
+  # Одноклассники
+  - "domain:ok.ru"
+  - "domain:okcdn.ru"
+  - "domain:odnoklassniki.ru"
+  # CDN Mail.ru Group (статика, превью)
+  - "domain:mycdn.me"
+  # Мессенджер MAX (*.max.ru)
+  - "domain:max.ru"
+  # Замеченные у клиента MAX проверки внешнего IP (чтобы не расходились с путём через de-fra-1)
+  - "full:api.ipify.org"
+  - "full:checkip.amazonaws.com"
+  - "domain:ifconfig.me"
+
+# --- DNS и геоданные ---
+dns_servers:
+  - "1.1.1.1"
+  - "8.8.8.8"
+  - address: "localhost"
+    domains:
+      - "geosite:category-ru"

@@ -1,0 +1,26 @@
+---
+- name: Create Xray config directory
+  ansible.builtin.file:
+    path: "{{ xray_config_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Create Xray log directory
+  ansible.builtin.file:
+    path: "{{ xray_log_dir }}"
+    state: directory
+    owner: "{{ xray_container_uid }}"
+    group: "{{ xray_container_gid }}"
+    mode: "0755"
+    recurse: true
+
+- name: Create geodata directory
+  ansible.builtin.file:
+    path: "{{ xray_geodata_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  when: server_role == 'ru-relay'

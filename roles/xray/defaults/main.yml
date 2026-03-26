@@ -1,0 +1,14 @@
+---
+xray_config_dir: /opt/xray
+xray_log_dir: /var/log/xray
+xray_dns_log: false
+xray_sniffing_route_only: false
+xray_geodata_dir: /opt/xray/geodata
+
+# ghcr.io/xtls/xray-core runs as non-root; host-mounted log dir must be writable by this UID
+xray_container_uid: 65532
+xray_container_gid: 65532
+
+# RU relay loads geodata + observatory; allow slow starts before health check fails
+xray_wait_for_port_delay: 3
+xray_wait_for_port_timeout: 90

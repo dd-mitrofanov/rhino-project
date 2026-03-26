@@ -1,0 +1,43 @@
+---
+- name: Deploy Xray on RU relay servers
+  hosts: ru_relays
+  become: true
+
+  vars_files:
+    - ../configs/production/secrets/vault.yml
+    - ../configs/production/vars/servers.yml
+    - ../configs/production/vars/xray.yml
+    - ../configs/production/vars/monitoring.yml
+
+  roles:
+    - role: xray
+
+  post_tasks:
+    - name: Verify Xray is listening
+      ansible.builtin.wait_for:
+        port: "{{ xray_inbound_port }}"
+        timeout: 15
+
+    - name: Check Xray container status
+      ansible.builtin.command: docker ps --filter name=xray --format "{% raw %}{{.Status}}{% endraw %}"
+      changed_when: false
+      register: container_status
+
+    - name: Display container status
+      ansible.builtin.debug:
+        msg: "Xray container: {{ container_status.stdout }}"
+
+    - name: Verify geodata files exist
+      ansible.builtin.stat:
+        path: "{{ xray_geodata_dir }}/{{ item }}"
+      loop:
+        - geosite.dat
+        - geoip.dat
+      register: geodata_check
+
+    - name: Assert geodata files are present
+      ansible.builtin.assert:
+        that:
+          - item.stat.exists
+        fail_msg: "Geodata file {{ item.item }} is missing!"
+      loop: "{{ geodata_check.results }}"

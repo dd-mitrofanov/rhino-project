@@ -1,0 +1,53 @@
+---
+- name: Create telegram-bot directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0755"
+  loop:
+    - "{{ telegram_bot_dir }}"
+    - "{{ telegram_bot_dir }}/bot"
+    - "{{ telegram_bot_dir }}/pgdata"
+
+- name: Install rsync for synchronize module
+  ansible.builtin.apt:
+    name: rsync
+    state: present
+    cache_valid_time: 3600
+
+- name: Sync bot application source
+  ansible.posix.synchronize:
+    src: "{{ playbook_dir }}/../bot/"
+    dest: "{{ telegram_bot_dir }}/bot/"
+    delete: true
+    rsync_opts:
+      - "--exclude=__pycache__"
+      - "--exclude=*.pyc"
+      - "--exclude=.env"
+
+- name: Render bot environment file
+  ansible.builtin.template:
+    src: "{{ playbook_dir }}/../configs/production/templates/telegram-bot.env.j2"
+    dest: "{{ telegram_bot_dir }}/.env"
+    mode: "0600"
+
+- name: Install docker-compose for telegram-bot
+  ansible.builtin.template:
+    src: "{{ playbook_dir }}/../configs/production/templates/docker-compose.telegram-bot.yml.j2"
+    dest: "{{ telegram_bot_dir }}/docker-compose.yml"
+    mode: "0644"
+
+- name: Allow internal API port from RU relays only
+  community.general.ufw:
+    rule: allow
+    from_ip: "{{ hostvars[item].ansible_host }}"
+    port: "{{ subscription_api_internal_port | string }}"
+    proto: tcp
+  loop: "{{ groups['ru_relays'] }}"
+
+- name: Start telegram-bot stack
+  community.docker.docker_compose_v2:
+    project_src: "{{ telegram_bot_dir }}"
+    state: present
+    build: always
+  register: telegram_bot_compose

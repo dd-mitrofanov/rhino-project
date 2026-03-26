@@ -1,0 +1,74 @@
+---
+# HTTP-01: challenge files are published on every relay so Let's Encrypt can hit any A record.
+# One LE certificate + one private key are then copied to all relays (same files everywhere).
+- name: ACME step 1 — create order / get HTTP-01 challenge
+  community.crypto.acme_certificate:
+    account_key_src: "{{ subscription_api_acme_controller_dir }}/account.key"
+    account_email: "{{ subscription_api_acme_email }}"
+    csr: "{{ subscription_api_acme_controller_dir }}/domain.csr"
+    dest: "{{ subscription_api_acme_controller_dir }}/cert.pem"
+    fullchain_dest: "{{ subscription_api_acme_controller_dir }}/fullchain.pem"
+    chain_dest: "{{ subscription_api_acme_controller_dir }}/chain.pem"
+    acme_directory: "{{ subscription_api_acme_directory }}"
+    acme_version: 2
+    terms_agreed: true
+    remaining_days: 30
+    challenge: http-01
+  register: subscription_acme_step1
+  delegate_to: localhost
+  become: false
+  run_once: true
+
+# community.crypto: resource is usually ".well-known/acme-challenge/<token>" under webroot; older releases used only the token filename.
+- name: Publish HTTP-01 challenge to all subscription relays
+  ansible.builtin.copy:
+    dest: "{{ subscription_api_dir }}/certbot/www/{{ item.value['http-01'].resource if item.value['http-01'].resource is search('\\.well-known') else ('.well-known/acme-challenge/' + item.value['http-01'].resource) }}"
+    content: "{{ item.value['http-01'].resource_value }}"
+    mode: "0644"
+  loop: "{{ subscription_acme_step1.challenge_data | dict2items }}"
+  when:
+    - subscription_acme_step1 is changed
+    - subscription_acme_step1.challenge_data is defined
+    - subscription_acme_step1.challenge_data | length > 0
+
+- name: Brief pause for challenge propagation
+  ansible.builtin.pause:
+    seconds: 3
+  when: subscription_acme_step1 is changed
+
+- name: ACME step 2 — complete validation and fetch certificate
+  community.crypto.acme_certificate:
+    account_key_src: "{{ subscription_api_acme_controller_dir }}/account.key"
+    account_email: "{{ subscription_api_acme_email }}"
+    csr: "{{ subscription_api_acme_controller_dir }}/domain.csr"
+    dest: "{{ subscription_api_acme_controller_dir }}/cert.pem"
+    fullchain_dest: "{{ subscription_api_acme_controller_dir }}/fullchain.pem"
+    chain_dest: "{{ subscription_api_acme_controller_dir }}/chain.pem"
+    acme_directory: "{{ subscription_api_acme_directory }}"
+    acme_version: 2
+    terms_agreed: true
+    remaining_days: 30
+    challenge: http-01
+    data: "{{ subscription_acme_step1 }}"
+  when: subscription_acme_step1 is changed
+  register: subscription_acme_step2
+  delegate_to: localhost
+  become: false
+  run_once: true
+
+- name: Install certificate chain on all relays
+  ansible.builtin.copy:
+    src: "{{ subscription_api_acme_controller_dir }}/fullchain.pem"
+    dest: "{{ subscription_api_dir }}/certs/fullchain.pem"
+    mode: "0644"
+  notify: Restart subscription caddy
+
+- name: Install private key on all relays
+  ansible.builtin.copy:
+    src: "{{ subscription_api_acme_controller_dir }}/domain.key"
+    dest: "{{ subscription_api_dir }}/certs/privkey.pem"
+    mode: "0600"
+  notify: Restart subscription caddy
+
+- name: Apply Caddy reload after TLS updates
+  ansible.builtin.meta: flush_handlers

@@ -1,0 +1,16 @@
+---
+# If `inventories/production/group_vars/all/` exists as a directory, Ansible ignores
+# `inventories/production/group_vars/all.yml` at the parent level — keep shared vars here.
+
+ansible_user: deploy
+ansible_python_interpreter: /usr/bin/python3
+ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
+
+ansible_ssh_private_key_file: "{{ lookup('env', 'HOME') }}/.ssh/id_rhino"
+
+xray_docker_image: "ghcr.io/xtls/xray-core"
+xray_version: "{{ xray_docker_tag }}"
+
+xray_config_dir: /opt/xray
+xray_geodata_dir: /opt/xray/geodata
+xray_log_dir: /var/log/xray

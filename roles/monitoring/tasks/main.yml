@@ -1,0 +1,87 @@
+---
+- name: Create monitoring directories
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: directory
+    owner: "{{ item.owner | default('root') }}"
+    group: "{{ item.group | default('root') }}"
+    mode: "0755"
+  loop:
+    - { path: "{{ monitoring_dir }}" }
+    - { path: "{{ monitoring_dir }}/provisioning/datasources" }
+    - { path: "{{ monitoring_dir }}/provisioning/dashboards" }
+    - { path: "{{ monitoring_dir }}/dashboards" }
+    - { path: "{{ monitoring_prometheus_data_dir }}", owner: "65534", group: "65534" }
+    - { path: "{{ monitoring_grafana_data_dir }}", owner: "472", group: "472" }
+
+- name: Template Prometheus config
+  ansible.builtin.template:
+    src: "{{ playbook_dir }}/../configs/production/templates/prometheus.yml.j2"
+    dest: "{{ monitoring_dir }}/prometheus.yml"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: restart monitoring stack
+
+- name: Template monitoring docker-compose
+  ansible.builtin.template:
+    src: "{{ playbook_dir }}/../configs/production/templates/docker-compose.monitoring.yml.j2"
+    dest: "{{ monitoring_dir }}/docker-compose.yml"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: restart monitoring stack
+
+- name: Template Caddyfile for Grafana
+  ansible.builtin.template:
+    src: "{{ playbook_dir }}/../configs/production/templates/Caddyfile.monitoring.j2"
+    dest: "{{ monitoring_dir }}/Caddyfile"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: restart monitoring stack
+
+- name: Template Grafana datasource provisioning
+  ansible.builtin.template:
+    src: "{{ playbook_dir }}/../configs/production/templates/grafana-datasource-prometheus.yml.j2"
+    dest: "{{ monitoring_dir }}/provisioning/datasources/prometheus.yml"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: restart monitoring stack
+
+- name: Template Grafana dashboard provider
+  ansible.builtin.template:
+    src: "{{ playbook_dir }}/../configs/production/templates/grafana-dashboard-provider.yml.j2"
+    dest: "{{ monitoring_dir }}/provisioning/dashboards/default.yml"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: restart monitoring stack
+
+- name: Copy Xray exporter dashboard JSON
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/../configs/production/files/grafana-dashboards/xray-exporter.json"
+    dest: "{{ monitoring_dir }}/dashboards/xray-exporter.json"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: restart monitoring stack
+
+- name: Allow Caddy HTTP for ACME challenges
+  community.general.ufw:
+    rule: allow
+    port: "80"
+    proto: tcp
+
+- name: Allow Caddy HTTPS for Grafana
+  community.general.ufw:
+    rule: allow
+    port: "{{ grafana_https_port | string }}"
+    proto: tcp
+
+- name: Start monitoring stack
+  community.docker.docker_compose_v2:
+    project_src: "{{ monitoring_dir }}"
+    state: present
+  register: monitoring_compose

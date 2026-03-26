@@ -1,0 +1,101 @@
+{% set tag_normalized = server_tag | replace('-', '_') %}
+{% set server_uuid_var = 'vault_' + tag_normalized + '_uuid' %}
+{% set server_pk_var = 'vault_' + tag_normalized + '_reality_private_key' %}
+{
+  "stats": {},
+  "api": {
+    "tag": "api",
+    "services": ["StatsService"]
+  },
+  "policy": {
+    "levels": {
+      "0": {
+        "statsUserUplink": true,
+        "statsUserDownlink": true
+      }
+    },
+    "system": {
+      "statsInboundUplink": true,
+      "statsInboundDownlink": true,
+      "statsOutboundUplink": true,
+      "statsOutboundDownlink": true
+    }
+  },
+  "log": {
+    "loglevel": "{{ xray_log_level }}",
+    "access": "/var/log/xray/access.log",
+    "error": "/var/log/xray/error.log",
+    "dnsLog": {{ xray_dns_log | to_json }}
+  },
+  "dns": {
+    "servers": [
+      "1.1.1.1",
+      "8.8.8.8"
+    ]
+  },
+  "inbounds": [
+    {
+      "tag": "api-in",
+      "listen": "127.0.0.1",
+      "port": {{ xray_grpc_port | default(10085) }},
+      "protocol": "dokodemo-door",
+      "settings": {
+        "address": "127.0.0.1"
+      }
+    },
+    {
+      "tag": "vless-in",
+      "listen": "0.0.0.0",
+      "port": {{ xray_inbound_port }},
+      "protocol": "vless",
+      "settings": {
+        "clients": [
+          {
+            "id": "{{ lookup('vars', server_uuid_var) }}",
+            "flow": "xtls-rprx-vision"
+          }
+        ],
+        "decryption": "none"
+      },
+      "streamSettings": {
+        "network": "raw",
+        "security": "reality",
+        "realitySettings": {
+          "show": false,
+          "dest": "{{ sni_domain_default }}:443",
+          "xver": 0,
+          "serverNames": {{ sni_domains | to_json }},
+          "privateKey": "{{ lookup('vars', server_pk_var) }}",
+          "shortIds": {{ xray_reality_short_ids | to_json }}
+        }
+      }
+    }
+  ],
+  "outbounds": [
+    {
+      "tag": "direct",
+      "protocol": "freedom",
+      "settings": {}
+    },
+    {
+      "tag": "blocked",
+      "protocol": "blackhole",
+      "settings": {}
+    }
+  ],
+  "routing": {
+    "domainStrategy": "AsIs",
+    "rules": [
+      {
+        "type": "field",
+        "inboundTag": ["api-in"],
+        "outboundTag": "api"
+      },
+      {
+        "type": "field",
+        "outboundTag": "blocked",
+        "protocol": ["bittorrent"]
+      }
+    ]
+  }
+}

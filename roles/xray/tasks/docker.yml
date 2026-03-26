@@ -1,0 +1,39 @@
+---
+- name: Pull Xray Docker image
+  community.docker.docker_image:
+    name: "{{ xray_docker_image }}"
+    tag: "{{ xray_version }}"
+    source: pull
+
+- name: Remove existing xray container if present
+  community.docker.docker_container:
+    name: xray
+    state: absent
+
+- name: Start Xray container
+  community.docker.docker_compose_v2:
+    project_src: "{{ xray_config_dir }}"
+    state: present
+  register: xray_compose
+
+- name: Wait for Xray to be healthy
+  block:
+    - name: Wait for Xray TCP port
+      ansible.builtin.wait_for:
+        port: "{{ xray_inbound_port }}"
+        delay: "{{ xray_wait_for_port_delay }}"
+        timeout: "{{ xray_wait_for_port_timeout }}"
+  rescue:
+    - name: Fetch Xray container logs after wait failure
+      ansible.builtin.command: docker logs xray --tail 200
+      register: xray_wait_fail_logs
+      changed_when: false
+      failed_when: false
+
+    - name: Report Xray wait failure with logs
+      ansible.builtin.fail:
+        msg: |
+          Xray did not accept TCP {{ xray_inbound_port }} within {{ xray_wait_for_port_timeout }}s.
+          On the server: docker logs xray, journalctl, or {{ xray_log_dir }}/error.log.
+          docker logs xray --tail 200:
+          {{ xray_wait_fail_logs.stdout | default('(docker logs failed)', true) }}

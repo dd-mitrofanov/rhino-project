@@ -1,0 +1,193 @@
+{% set tag_normalized = server_tag | replace('-', '_') %}
+{% set server_pk_var = 'vault_' + tag_normalized + '_reality_private_key' %}
+{
+  "stats": {},
+  "api": {
+    "tag": "api",
+    "services": ["HandlerService", "StatsService"]
+  },
+  "policy": {
+    "levels": {
+      "0": {
+        "statsUserUplink": true,
+        "statsUserDownlink": true,
+        "statsUserOnline": true
+      }
+    },
+    "system": {
+      "statsInboundUplink": true,
+      "statsInboundDownlink": true,
+      "statsOutboundUplink": true,
+      "statsOutboundDownlink": true
+    }
+  },
+  "log": {
+    "loglevel": "{{ xray_log_level }}",
+    "access": "/var/log/xray/access.log",
+    "error": "/var/log/xray/error.log",
+    "dnsLog": {{ xray_dns_log | to_json }}
+  },
+  "dns": {
+    "servers": [
+      {
+        "address": "localhost",
+        "domains": ["geosite:category-ru"]
+      },
+      "1.1.1.1",
+      "8.8.8.8"
+    ]
+  },
+  "inbounds": [
+    {
+      "tag": "api-in",
+      "listen": "0.0.0.0",
+      "port": {{ xray_grpc_port | default(10085) }},
+      "protocol": "dokodemo-door",
+      "settings": {
+        "address": "127.0.0.1"
+      }
+    },
+    {
+      "tag": "vless-in",
+      "listen": "0.0.0.0",
+      "port": {{ xray_inbound_port }},
+      "protocol": "vless",
+      "settings": {
+        "clients": [],
+        "decryption": "none"
+      },
+      "streamSettings": {
+        "network": "xhttp",
+        "xhttpSettings": {
+          "path": "/",
+          "mode": "packet-up"
+        },
+        "security": "reality",
+        "realitySettings": {
+          "show": false,
+          "dest": "{{ sni_domain_default }}:443",
+          "xver": 0,
+          "serverNames": {{ sni_domains | to_json }},
+          "privateKey": "{{ lookup('vars', server_pk_var) }}",
+          "shortIds": {{ xray_reality_short_ids | to_json }}
+        }
+      },
+      "sniffing": {
+        "enabled": true,
+        "destOverride": ["http", "tls", "quic"],
+        "routeOnly": {{ xray_sniffing_route_only | to_json }}
+      }
+    }
+  ],
+  "outbounds": [
+    {
+      "tag": "direct",
+      "protocol": "freedom",
+      "settings": {}
+    },
+    {
+      "tag": "blocked",
+      "protocol": "blackhole",
+      "settings": {}
+    }{% for server in foreign_servers %},
+    {
+{% set ftag = server.tag | replace('-', '_') %}
+{% set uuid_var = 'vault_' + ftag + '_uuid' %}
+{% set pubkey_var = 'vault_' + ftag + '_reality_public_key' %}
+      "tag": "{{ server.tag }}",
+      "protocol": "vless",
+      "settings": {
+        "vnext": [
+          {
+            "address": "{{ server.address }}",
+            "port": {{ server.port }},
+            "users": [
+              {
+                "id": "{{ lookup('vars', uuid_var) }}",
+                "encryption": "none",
+                "flow": "xtls-rprx-vision"
+              }
+            ]
+          }
+        ]
+      },
+      "streamSettings": {
+        "network": "raw",
+        "security": "reality",
+        "realitySettings": {
+          "show": false,
+          "fingerprint": "chrome",
+          "serverName": "{{ sni_domain_default }}",
+          "publicKey": "{{ lookup('vars', pubkey_var) }}",
+          "shortId": ""
+        }
+      }
+    }{% endfor %}
+  ],
+  "routing": {
+    "domainStrategy": "IPIfNonMatch",
+    "rules": [
+      {
+        "type": "field",
+        "inboundTag": ["api-in"],
+        "outboundTag": "api"
+      },
+      {
+        "type": "field",
+        "outboundTag": "blocked",
+        "protocol": ["bittorrent"]
+      },
+      {
+        "type": "field",
+        "outboundTag": "{{ ru_relay_vk_max_exit_tag }}",
+        "domain": {{ ru_relay_vk_max_domain_matchers | to_json }}
+      },
+      {
+        "type": "field",
+        "outboundTag": "direct",
+        "domain": ["geosite:category-ru"]
+      },
+      {
+        "type": "field",
+        "outboundTag": "direct",
+        "domain": ["geosite:private"]
+      },
+      {
+        "type": "field",
+        "outboundTag": "direct",
+        "ip": ["geoip:ru"]
+      },
+      {
+        "type": "field",
+        "balancerTag": "{{ balancer_tag }}",
+        "network": "tcp,udp"
+      }
+    ],
+    "balancers": [
+      {
+        "tag": "{{ balancer_tag }}",
+        "selector": [
+{% for server in foreign_servers %}
+          "{{ server.tag }}"{% if not loop.last %},{% endif %}
+
+{% endfor %}
+        ],
+        "strategy": {
+          "type": "{{ balancer_strategy }}"
+        },
+        "fallbackTag": "{{ foreign_servers[0].tag }}"
+      }
+    ]
+  },
+  "observatory": {
+    "subjectSelector": [
+{% for server in foreign_servers %}
+      "{{ server.tag }}"{% if not loop.last %},{% endif %}
+
+{% endfor %}
+    ],
+    "probeUrl": "{{ observatory_probe_url }}",
+    "probeInterval": "{{ observatory_probe_interval }}",
+    "enableConcurrency": {{ observatory_enable_concurrency | to_json }}
+  }
+}

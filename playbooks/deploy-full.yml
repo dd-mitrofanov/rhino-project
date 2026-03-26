@@ -1,0 +1,10 @@
+---
+# Full stack: VPN (site) + public subscription API on all RU relays + Telegram stack (NL) with built-in subscription HTTP.
+- name: VPN infrastructure
+  ansible.builtin.import_playbook: site.yml
+
+- name: External subscription API (all RU relays)
+  ansible.builtin.import_playbook: deploy-subscription-external.yml
+
+- name: Telegram bot with built-in subscription HTTP (nl-ams-1)
+  ansible.builtin.import_playbook: deploy-telegram-bot.yml

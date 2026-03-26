@@ -1,0 +1,44 @@
+---
+# ACME account + domain key material lives only on the Ansible controller (see .subscription-acme/).
+- name: Set ACME material directory on Ansible controller
+  ansible.builtin.set_fact:
+    subscription_api_acme_controller_dir: "{{ playbook_dir }}/../.subscription-acme"
+  run_once: true
+
+- name: Ensure ACME directory on controller
+  ansible.builtin.file:
+    path: "{{ subscription_api_acme_controller_dir }}"
+    state: directory
+    mode: "0700"
+  delegate_to: localhost
+  become: false
+  run_once: true
+
+- name: Create ACME account key on controller
+  community.crypto.openssl_privatekey:
+    path: "{{ subscription_api_acme_controller_dir }}/account.key"
+    size: 4096
+    type: RSA
+  delegate_to: localhost
+  become: false
+  run_once: true
+
+- name: Create domain private key for subscription certificate
+  community.crypto.openssl_privatekey:
+    path: "{{ subscription_api_acme_controller_dir }}/domain.key"
+    size: 4096
+    type: RSA
+  delegate_to: localhost
+  become: false
+  run_once: true
+
+- name: Create CSR for subscription hostname
+  community.crypto.openssl_csr:
+    path: "{{ subscription_api_acme_controller_dir }}/domain.csr"
+    privatekey_path: "{{ subscription_api_acme_controller_dir }}/domain.key"
+    common_name: "{{ subscription_api_domain }}"
+    subject_alt_name:
+      - "DNS:{{ subscription_api_domain }}"
+  delegate_to: localhost
+  become: false
+  run_once: true

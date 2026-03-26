@@ -1,0 +1,145 @@
+---
+- name: Require xray_version
+  ansible.builtin.assert:
+    that:
+      - xray_version is defined
+      - (xray_version | string | length) > 0
+    fail_msg: "Set xray_version (e.g. in group_vars)."
+
+- name: Install unzip for Xray zip archives (Debian family)
+  ansible.builtin.apt:
+    name: unzip
+    state: present
+    update_cache: false
+  when: ansible_os_family == "Debian"
+
+- name: Ensure Xray staging directory exists
+  ansible.builtin.file:
+    path: "{{ xray_staging_dir }}"
+    state: directory
+    mode: "0755"
+
+- name: Download Xray release zip
+  ansible.builtin.get_url:
+    url: "{{ xray_release_asset_url_pattern }}"
+    dest: "{{ xray_zip_path }}"
+    mode: "0644"
+    checksum: "{{ ('sha256:' + xray_sha256) if (xray_sha256 | default('') | length) > 0 else omit }}"
+    force: false
+
+- name: Unarchive Xray zip
+  ansible.builtin.unarchive:
+    src: "{{ xray_zip_path }}"
+    dest: "{{ xray_staging_dir }}"
+    remote_src: true
+    creates: "{{ xray_staging_dir }}/xray"
+
+- name: Install xray binary
+  ansible.builtin.copy:
+    src: "{{ xray_staging_dir }}/xray"
+    dest: "{{ xray_binary_path }}"
+    remote_src: true
+    mode: "0755"
+    owner: root
+    group: root
+
+- name: Verify Xray binary reports pinned version
+  ansible.builtin.command:
+    argv:
+      - "{{ xray_binary_path }}"
+      - version
+  register: test_xray_version_cmd
+  changed_when: false
+
+- name: Assert Xray version output contains pinned release
+  ansible.builtin.assert:
+    that:
+      - xray_version in test_xray_version_cmd.stdout
+    fail_msg: >-
+      Expected '{{ xray_version }}' in `xray version` output, got:
+      {{ test_xray_version_cmd.stdout | default('') }}
+
+- name: Require listener, XHTTP, VLESS UUID, and Reality secrets for config
+  ansible.builtin.assert:
+    that:
+      - xray_listen is defined
+      - xray_port is defined
+      - xhttp_path is defined
+      - xhttp_mode is defined
+      - vless_uuid is defined
+      - (vless_uuid | string | length) > 0
+      - vault_reality_private_key is defined
+      - (vault_reality_private_key | string | length) > 0
+      - sni_domains is defined
+      - (sni_domains | length) > 0
+      - sni_domain_default is defined
+      - (sni_domain_default | string | length) > 0
+      - xray_reality_short_ids is defined
+      - (xray_reality_short_ids | length) > 0
+      - xray_geodata_dir is defined
+    fail_msg: >-
+      Заполните group_vars (listen, port, xhttp, SNI, shortIds) и vault (UUID, vault_reality_private_key).
+
+- name: Ensure Xray log directory exists
+  ansible.builtin.file:
+    path: /var/log/xray
+    state: directory
+    mode: "0755"
+
+- name: Ensure Xray geodata directory exists
+  ansible.builtin.file:
+    path: "{{ xray_geodata_dir }}"
+    state: directory
+    mode: "0755"
+
+- name: Download geodata for routing and DNS (geosite/geoip)
+  ansible.builtin.get_url:
+    url: "{{ item.url }}"
+    dest: "{{ xray_geodata_dir }}/{{ item.name }}"
+    mode: "0644"
+    force: true
+  loop: "{{ test_xray_geodata_sources }}"
+  loop_control:
+    label: "{{ item.name }}"
+
+- name: Ensure Xray config directory exists
+  ansible.builtin.file:
+    path: "{{ xray_config_path | dirname }}"
+    state: directory
+    mode: "0755"
+
+- name: Install xray-test systemd unit
+  ansible.builtin.template:
+    src: xray-test.service.j2
+    dest: "/etc/systemd/system/{{ xray_systemd_unit_name }}"
+    mode: "0644"
+  register: test_xray_systemd_unit
+  notify: restart xray
+
+- name: Reload systemd daemon
+  ansible.builtin.systemd:
+    daemon_reload: true
+  when: test_xray_systemd_unit is changed
+
+- name: Deploy Xray JSON configuration
+  ansible.builtin.template:
+    src: "{{ playbook_dir }}/../configs/test/templates/xray.json.j2"
+    dest: "{{ xray_config_path }}"
+    mode: "0644"
+  notify: restart xray
+
+- name: Validate Xray configuration
+  ansible.builtin.command:
+    argv:
+      - "{{ xray_binary_path }}"
+      - run
+      - -test
+      - -c
+      - "{{ xray_config_path }}"
+  changed_when: false
+
+- name: Enable and start xray-test service
+  ansible.builtin.systemd:
+    name: "{{ xray_systemd_unit_name }}"
+    enabled: true
+    state: started

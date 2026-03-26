@@ -1,0 +1,30 @@
+---
+# Linux amd64: upstream names the asset Xray-linux-64.zip (not *amd64*).
+xray_linux_archive_name: Xray-linux-64.zip
+
+xray_binary_path: /usr/local/bin/xray
+xray_config_path: /usr/local/etc/xray/config.json
+xray_systemd_unit_name: xray-test.service
+xray_inbound_tag: vless-in
+xray_geodata_dir: /usr/local/share/xray
+xray_log_level: warning
+xray_log_access_path: /var/log/xray/access.log
+xray_log_error_path: /var/log/xray/error.log
+xray_dns_log: false
+xray_sniffing_route_only: false
+
+# Источники geodata (как playbooks/update-geodata.yml)
+test_xray_geodata_sources:
+  - name: geosite.dat
+    url: "https://github.com/v2fly/domain-list-community/releases/latest/download/dlc.dat"
+  - name: geoip.dat
+    url: "https://github.com/v2fly/geoip/releases/latest/download/geoip.dat"
+xray_staging_root: /var/tmp
+xray_staging_dir: "{{ xray_staging_root }}/xray-core-{{ xray_version }}"
+xray_zip_path: "{{ xray_staging_dir }}/{{ xray_linux_archive_name }}"
+
+xray_release_asset_url_pattern: >-
+  https://github.com/XTLS/Xray-core/releases/download/v{{ xray_version }}/{{ xray_linux_archive_name }}
+
+# Optional: SHA-256 of the zip (hex, no prefix) for get_url verification.
+# xray_sha256: ""

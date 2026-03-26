@@ -1,0 +1,7 @@
+{{ vault_grafana_domain }}:{{ grafana_https_port }} {
+    reverse_proxy 127.0.0.1:{{ grafana_port }}
+}
+
+{{ vault_grafana_domain }}:80 {
+    redir https://{{ vault_grafana_domain }}:{{ grafana_https_port }}{uri} permanent
+}

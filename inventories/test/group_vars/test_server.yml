@@ -1,0 +1,7 @@
+---
+# Параметры подключения Ansible (инвентарь test_server).
+# Xray-настройки — в configs/test/vars/xray.yml.
+# Секреты — configs/test/secrets/vault.yml (см. vault.yml.example).
+
+ansible_ssh_private_key_file: ~/.ssh/id_rhino
+ansible_user: deploy

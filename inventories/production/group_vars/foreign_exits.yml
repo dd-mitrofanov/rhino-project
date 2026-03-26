@@ -1,0 +1,4 @@
+---
+server_role: foreign-exit
+xray_inbound_port: 443
+xray_template: foreign-exit.json.j2

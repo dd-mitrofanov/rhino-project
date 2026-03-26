@@ -1,0 +1,62 @@
+---
+- name: Deploy monitoring stack on de-fra-1
+  hosts: de-fra-1
+  become: true
+
+  vars_files:
+    - ../configs/production/secrets/vault.yml
+    - ../configs/production/vars/servers.yml
+    - ../configs/production/vars/xray.yml
+    - ../configs/production/vars/monitoring.yml
+
+  roles:
+    - role: monitoring
+
+  post_tasks:
+    - name: Verify Prometheus container is running
+      ansible.builtin.command: >
+        docker ps --filter name=prometheus --format "{% raw %}{{.Status}}{% endraw %}"
+      changed_when: false
+      register: prometheus_status
+
+    - name: Display Prometheus container status
+      ansible.builtin.debug:
+        msg: "Prometheus container: {{ prometheus_status.stdout }}"
+
+    - name: Verify Grafana container is running
+      ansible.builtin.command: >
+        docker ps --filter name=grafana --format "{% raw %}{{.Status}}{% endraw %}"
+      changed_when: false
+      register: grafana_status
+
+    - name: Display Grafana container status
+      ansible.builtin.debug:
+        msg: "Grafana container: {{ grafana_status.stdout }}"
+
+    - name: Verify Caddy container is running
+      ansible.builtin.command: >
+        docker ps --filter name=monitoring-caddy --format "{% raw %}{{.Status}}{% endraw %}"
+      changed_when: false
+      register: caddy_status
+
+    - name: Display Caddy container status
+      ansible.builtin.debug:
+        msg: "Caddy container: {{ caddy_status.stdout }}"
+
+    - name: Wait for Prometheus to be ready
+      ansible.builtin.uri:
+        url: "http://127.0.0.1:{{ prometheus_port }}/-/ready"
+        status_code: 200
+      register: prom_ready
+      retries: 10
+      delay: 3
+      until: prom_ready.status == 200
+
+    - name: Wait for Grafana to be ready
+      ansible.builtin.uri:
+        url: "http://127.0.0.1:{{ grafana_port }}/api/health"
+        status_code: 200
+      register: grafana_ready
+      retries: 10
+      delay: 3
+      until: grafana_ready.status == 200

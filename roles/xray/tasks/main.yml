@@ -1,0 +1,16 @@
+---
+- name: Create directories
+  ansible.builtin.include_tasks: directories.yml
+
+- name: Deploy geodata
+  ansible.builtin.include_tasks: geodata.yml
+  when: server_role == 'ru-relay'
+
+- name: Deploy configuration
+  ansible.builtin.include_tasks: config.yml
+
+- name: Configure firewall
+  ansible.builtin.include_tasks: firewall.yml
+
+- name: Manage Docker container
+  ansible.builtin.include_tasks: docker.yml

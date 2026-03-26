@@ -1,0 +1,19 @@
+---
+# Test-server deployment entry point only. Do not import_playbook / include any
+# production playbooks under playbooks/ (e.g. site.yml, deploy-full.yml).
+#
+# Encrypted vars: configs/test/secrets/vault.yml (copy from vault.yml.example, encrypt).
+# Or generate: make gen-keys-test
+- name: Deploy test Xray server (VLESS + XHTTP + Reality, prod-like inbound)
+  hosts: test_server
+  gather_facts: true
+  become: true
+  vars_files:
+    - ../configs/test/secrets/vault.yml
+    - ../configs/test/vars/xray.yml
+  vars:
+    vless_uuid: "{{ vault_vless_uuid }}"
+  roles:
+    - role: test_xray
+      tags:
+        - xray

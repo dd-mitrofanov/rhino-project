@@ -1,0 +1,9 @@
+---
+- name: Common setup for all servers
+  ansible.builtin.import_playbook: setup-common.yml
+
+- name: Deploy foreign exit servers
+  ansible.builtin.import_playbook: deploy-foreign-exit.yml
+
+- name: Deploy RU relay servers
+  ansible.builtin.import_playbook: deploy-ru-relay.yml

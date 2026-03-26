@@ -1,0 +1,24 @@
+---
+- name: Allow Xray gRPC API from bot server
+  community.general.ufw:
+    rule: allow
+    port: "{{ xray_grpc_port | string }}"
+    proto: tcp
+    from_ip: "{{ vault_nl_ams_1_ip }}"
+  when: server_role == 'ru-relay'
+
+- name: Allow xray-exporter scrape from Prometheus server
+  community.general.ufw:
+    rule: allow
+    port: "{{ xray_exporter_port | string }}"
+    proto: tcp
+    from_ip: "{{ vault_de_fra_1_ip }}"
+  when: inventory_hostname != 'de-fra-1'
+
+- name: Allow xray-exporter scrape from localhost on Prometheus host
+  community.general.ufw:
+    rule: allow
+    port: "{{ xray_exporter_port | string }}"
+    proto: tcp
+    from_ip: "127.0.0.1"
+  when: inventory_hostname == 'de-fra-1'

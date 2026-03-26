@@ -1,0 +1,45 @@
+---
+# =============================================================================
+# Xray / Reality — Test Server Configuration
+# =============================================================================
+# Структура аналогична configs/production/vars/xray.yml. Секреты — в vault.
+# =============================================================================
+
+# --- Inbound: listen и порт ---
+xray_listen: "0.0.0.0"
+xray_port: 443
+
+# --- Логирование ---
+xray_log_level: warning
+xray_dns_log: true
+xray_log_access_path: /var/log/xray/access.log
+xray_log_error_path: /var/log/xray/error.log
+
+# --- Sniffing ---
+xray_sniffing_route_only: false
+
+# --- XHTTP (как на RU relay) ---
+xhttp_path: "/"
+xhttp_mode: packet-up
+xhttp_host: ""
+
+# --- Inbound tag ---
+xray_inbound_tag: vless-in
+
+# --- SNI / Reality masquerade ---
+# serverNames и dest — как в проде; клиентский SNI должен быть одним из sni_domains
+sni_domains:
+  - vkvideo.ru
+sni_domain_default: "vkvideo.ru"
+
+# --- Reality shortIds ---
+xray_reality_short_ids:
+  - ""
+  - "0123456789abcdef"
+
+# --- Версия Xray и URL релиза ---
+xray_version: "26.2.6"
+xray_release_asset_url_pattern: "https://github.com/XTLS/Xray-core/releases/download/v{{ xray_version }}/Xray-linux-64.zip"
+
+# --- Геоданные ---
+xray_geodata_dir: /usr/local/share/xray

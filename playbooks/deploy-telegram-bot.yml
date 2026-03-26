@@ -1,0 +1,39 @@
+---
+- name: Deploy Telegram bot
+  hosts: telegram_bot
+  become: true
+
+  vars_files:
+    - ../configs/production/secrets/vault.yml
+    - ../configs/production/vars/servers.yml
+    - ../configs/production/vars/xray.yml
+
+  pre_tasks:
+    - name: Build RU servers JSON for subscription API
+      ansible.builtin.set_fact:
+        ru_servers_json: >-
+          [{% for s in ru_servers %}{"tag":"{{ s.tag }}","address":"{{ s.address }}","port":{{ s.port }},"location":"{{ s.location }}","reality_public_key":"{{ lookup('vars', 'vault_' + (s.tag | replace('-','_')) + '_reality_public_key') }}","sni_domain":"{{ sni_domain_default }}","short_id":"{{ xray_subscription_short_id }}"}{% if not loop.last %},{% endif %}{% endfor %}]
+
+  roles:
+    - role: telegram-bot
+
+  post_tasks:
+    - name: Verify bot container is running
+      ansible.builtin.command: >
+        docker ps --filter name=telegram-bot --format "{% raw %}{{.Status}}{% endraw %}"
+      changed_when: false
+      register: bot_container_status
+
+    - name: Display bot container status
+      ansible.builtin.debug:
+        msg: "Telegram bot container: {{ bot_container_status.stdout }}"
+
+    - name: Verify PostgreSQL container is running
+      ansible.builtin.command: >
+        docker ps --filter name=telegram-bot-db --format "{% raw %}{{.Status}}{% endraw %}"
+      changed_when: false
+      register: db_container_status
+
+    - name: Display DB container status
+      ansible.builtin.debug:
+        msg: "PostgreSQL container: {{ db_container_status.stdout }}"

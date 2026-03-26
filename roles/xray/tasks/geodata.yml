@@ -1,0 +1,12 @@
+---
+- name: Download geodata files
+  ansible.builtin.get_url:
+    url: "{{ item.url }}"
+    dest: "{{ xray_geodata_dir }}/{{ item.name }}"
+    mode: "0644"
+  loop:
+    - name: geosite.dat
+      url: "https://github.com/v2fly/domain-list-community/releases/latest/download/dlc.dat"
+    - name: geoip.dat
+      url: "https://github.com/v2fly/geoip/releases/latest/download/geoip.dat"
+  notify: restart xray
