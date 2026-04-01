@@ -18,10 +18,10 @@ ru_servers:
     address: "{{ vault_ru_msk_1_ip }}"
     port: 443
     location: moscow
-  - tag: ru-msk-2
-    address: "{{ vault_ru_msk_2_ip }}"
-    port: 443
-    location: moscow
+  # - tag: ru-msk-2
+  #   address: "{{ vault_ru_msk_2_ip }}"
+  #   port: 443
+  #   location: moscow
   - tag: ru-msk-3
     address: "{{ vault_ru_msk_3_ip }}"
     port: 443
