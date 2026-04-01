@@ -22,3 +22,19 @@
     proto: tcp
     from_ip: "127.0.0.1"
   when: inventory_hostname == 'de-fra-1'
+
+- name: Allow node_exporter scrape from Prometheus server
+  community.general.ufw:
+    rule: allow
+    port: "{{ node_exporter_port | string }}"
+    proto: tcp
+    from_ip: "{{ vault_de_fra_1_ip }}"
+  when: inventory_hostname != 'de-fra-1'
+
+- name: Allow node_exporter scrape from localhost on Prometheus host
+  community.general.ufw:
+    rule: allow
+    port: "{{ node_exporter_port | string }}"
+    proto: tcp
+    from_ip: "127.0.0.1"
+  when: inventory_hostname == 'de-fra-1'

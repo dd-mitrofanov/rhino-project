@@ -25,6 +25,12 @@
       - "--exclude=*.pyc"
       - "--exclude=.env"
 
+- name: Sync user-mapping-exporter source
+  ansible.posix.synchronize:
+    src: "{{ playbook_dir }}/../mapping-exporter/"
+    dest: "{{ telegram_bot_dir }}/mapping-exporter/"
+    delete: true
+
 - name: Render bot environment file
   ansible.builtin.template:
     src: "{{ playbook_dir }}/../configs/production/templates/telegram-bot.env.j2"
@@ -44,6 +50,13 @@
     port: "{{ subscription_api_internal_port | string }}"
     proto: tcp
   loop: "{{ groups['ru_relays'] }}"
+
+- name: Allow user-mapping-exporter scrape from Prometheus server
+  community.general.ufw:
+    rule: allow
+    port: "{{ user_mapping_exporter_port | string }}"
+    proto: tcp
+    from_ip: "{{ vault_de_fra_1_ip }}"
 
 - name: Start telegram-bot stack
   community.docker.docker_compose_v2:

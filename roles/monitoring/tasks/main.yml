@@ -68,6 +68,24 @@
     mode: "0644"
   notify: restart monitoring stack
 
+- name: Copy Node / host dashboard JSON
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/../configs/production/files/grafana-dashboards/node-overview.json"
+    dest: "{{ monitoring_dir }}/dashboards/node-overview.json"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: restart monitoring stack
+
+- name: Copy RU traffic & Telegram dashboard JSON
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/../configs/production/files/grafana-dashboards/rhino-traffic-telegram.json"
+    dest: "{{ monitoring_dir }}/dashboards/rhino-traffic-telegram.json"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: restart monitoring stack
+
 - name: Allow Caddy HTTP for ACME challenges
   community.general.ufw:
     rule: allow

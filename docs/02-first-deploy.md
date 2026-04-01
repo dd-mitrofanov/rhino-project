@@ -150,4 +150,5 @@ Uses `ANSIBLE_CONFIG=ansible-test.cfg`. Does **not** import production `site.yml
 ## See also
 
 - Makefile targets: summarized in [06-bot-and-subs.md](06-bot-and-subs.md) and [05-monitoring.md](05-monitoring.md).
+- Phased rollout (e.g. nl-ams-1 + ru-msk-1 first, then remaining nodes, then Telegram + monitoring): [10-phased-deploy.md](10-phased-deploy.md).
 - Adding hosts after the base four: [07-add-ru-relay.md](07-add-ru-relay.md), [08-add-foreign-exit.md](08-add-foreign-exit.md).

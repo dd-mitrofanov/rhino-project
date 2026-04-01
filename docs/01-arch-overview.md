@@ -126,3 +126,4 @@ Vault symlink: `make` targets ensure `inventories/production/group_vars/all/vaul
 | Bot & subscriptions | [06-bot-and-subs.md](06-bot-and-subs.md) |
 | Add RU relay | [07-add-ru-relay.md](07-add-ru-relay.md) |
 | Add foreign exit | [08-add-foreign-exit.md](08-add-foreign-exit.md) |
+| Phased deploy order | [10-phased-deploy.md](10-phased-deploy.md) |

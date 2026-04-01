@@ -23,3 +23,35 @@ scrape_configs:
           role: foreign-exit
           location: "{{ server.location }}"
 {% endfor %}
+
+  - job_name: node
+    metrics_path: /metrics
+    scrape_interval: 30s
+    static_configs:
+{% for server in ru_servers %}
+      - targets:
+          - "{{ server.address }}:{{ node_exporter_port }}"
+        labels:
+          server: "{{ server.tag }}"
+          role: ru-relay
+          location: "{{ server.location }}"
+{% endfor %}
+{% for server in foreign_servers %}
+      - targets:
+          - "{{ server.address }}:{{ node_exporter_port }}"
+        labels:
+          server: "{{ server.tag }}"
+          role: foreign-exit
+          location: "{{ server.location }}"
+{% endfor %}
+
+  - job_name: telegram_user_mapping
+    metrics_path: /metrics
+    scrape_interval: 60s
+    static_configs:
+      - targets:
+          - "{{ vault_nl_ams_1_ip }}:{{ user_mapping_exporter_port }}"
+        labels:
+          server: nl-ams-1
+          role: telegram-bot
+          location: amsterdam

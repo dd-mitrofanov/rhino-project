@@ -37,3 +37,22 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+
+  user-mapping-exporter:
+    build:
+      context: ./mapping-exporter
+      dockerfile: Dockerfile
+    container_name: user-mapping-exporter
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "{{ user_mapping_exporter_port }}:{{ user_mapping_exporter_port }}"
+    depends_on:
+      db:
+        condition: service_healthy
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"

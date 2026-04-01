@@ -7,6 +7,7 @@
     - ../configs/production/secrets/vault.yml
     - ../configs/production/vars/servers.yml
     - ../configs/production/vars/xray.yml
+    - ../configs/production/vars/monitoring.yml
 
   pre_tasks:
     - name: Build RU servers JSON for subscription API
@@ -37,3 +38,13 @@
     - name: Display DB container status
       ansible.builtin.debug:
         msg: "PostgreSQL container: {{ db_container_status.stdout }}"
+
+    - name: Verify user-mapping-exporter container is running
+      ansible.builtin.command: >
+        docker ps --filter name=user-mapping-exporter --format "{% raw %}{{.Status}}{% endraw %}"
+      changed_when: false
+      register: mapping_exporter_status
+
+    - name: Display user-mapping-exporter container status
+      ansible.builtin.debug:
+        msg: "user-mapping-exporter: {{ mapping_exporter_status.stdout }}"

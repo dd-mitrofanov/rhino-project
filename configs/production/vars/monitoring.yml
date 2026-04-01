@@ -8,6 +8,14 @@ xray_exporter_image: anatolykopyl/xray-exporter
 xray_exporter_version: latest
 xray_exporter_port: 9550
 
+# --- node_exporter (all Xray nodes + monitoring host) ---
+node_exporter_image: prom/node-exporter
+node_exporter_version: v1.8.2
+node_exporter_port: 9100
+
+# --- User → Telegram ID mapping (nl-ams-1, scraped by Prometheus) ---
+user_mapping_exporter_port: 9101
+
 # --- Prometheus (de-fra-1 only) ---
 prometheus_image: prom/prometheus
 prometheus_version: latest
