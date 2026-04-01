@@ -4,3 +4,10 @@
     project_src: "{{ xray_config_dir }}"
     state: present
     recreate: always
+
+- name: restart xray-sync-webhook
+  ansible.builtin.systemd:
+    name: xray-sync-webhook
+    enabled: true
+    state: restarted
+    daemon_reload: true

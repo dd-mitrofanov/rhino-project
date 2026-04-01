@@ -14,3 +14,7 @@
 
 - name: Manage Docker container
   ansible.builtin.include_tasks: docker.yml
+
+- name: Install xray sync webhook (RU relays only)
+  ansible.builtin.include_tasks: xray-sync-webhook.yml
+  when: server_role == 'ru-relay'

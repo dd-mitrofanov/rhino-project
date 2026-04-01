@@ -36,6 +36,8 @@ Point **`subscription_api_domain`** to **every RU relay** with **multiple A reco
 
 When subscriptions are created, revoked, or updated, the bot uses **gRPC** against each RU relay (`XRAY_GRPC_ENDPOINTS` — `address:xray_grpc_port` for each `ru_servers` entry) to add/remove **VLESS** users on inbound `vless-in`. Periodic sync can reconcile state after restarts (see `bot/app/config.py` for intervals).
 
+**After Xray restarts on an RU relay**, in-memory VLESS clients are empty until the bot runs sync again. Each RU host runs a small **`xray-sync-webhook`** systemd service (installed by the `xray` role) that watches `docker events` for the `xray` container **start** and sends **`POST /internal/xray-sync`** to the bot’s internal HTTP port (`subscription_api_internal_hostname` / IP and `subscription_api_internal_port`), with the same **Bearer** token as the subscription API (`vault_subscription_api_token`). That triggers a full `sync_all_subscriptions` from PostgreSQL without restarting the bot. UFW on the bot host should already allow that port only from RU relay IPs (see `roles/telegram-bot/tasks/main.yml`).
+
 **Important:** `vault_client_uuid` is shared across RU inbounds for user keys; per-relay **Reality key pairs** still differ and are embedded in `RU_SERVERS_JSON` for generated links.
 
 ---
@@ -56,7 +58,7 @@ After changing **`ru_servers`**, Reality keys used in links, or **`xray.yml`** f
 ## 6. Security notes
 
 - Treat each user’s subscription URL as a **secret** (token in path).
-- Rotate `vault_subscription_api_token` if leaked; redeploy bot and subscription external stacks.
+- Rotate `vault_subscription_api_token` if leaked; redeploy the Telegram bot, subscription external stacks on RU relays, and **`deploy-ru-relay`** (or the xray role) so `/etc/xray-sync-webhook.env` on each RU picks up the new secret.
 
 ---
 

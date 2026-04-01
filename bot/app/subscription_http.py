@@ -12,6 +12,7 @@ from app.config import settings
 from app.db.engine import AsyncSessionLocal
 from app.db.repositories import get_subscription_by_token
 from app.vless import build_vless_link
+from app.xray.sync import sync_all_subscriptions
 
 
 def _two_digit_prefix(subscription_token: str, server_tag: str) -> str:
@@ -44,6 +45,15 @@ async def verify_bearer_token(
 
 
 app = FastAPI(docs_url=None, redoc_url=None)
+
+
+@app.post("/internal/xray-sync")
+async def trigger_xray_sync(
+    _: None = Depends(verify_bearer_token),
+) -> dict[str, str]:
+    """Re-push all active VLESS clients to RU Xray nodes (same Bearer as subscription API)."""
+    await sync_all_subscriptions(AsyncSessionLocal)
+    return {"status": "ok"}
 
 
 @app.get("/{token}")

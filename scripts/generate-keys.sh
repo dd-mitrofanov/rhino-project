@@ -29,12 +29,15 @@ generate_hex_token() {
 echo "Generating Reality key pairs..."
 ru_msk_1_keys=$(generate_keypair)
 ru_msk_2_keys=$(generate_keypair)
+ru_msk_3_keys=$(generate_keypair)
 nl_ams_1_keys=$(generate_keypair)
+nl_ams_2_keys=$(generate_keypair)
 de_fra_1_keys=$(generate_keypair)
 
 echo "Generating VLESS UUIDs..."
 client_uuid=$(generate_uuid)
 nl_ams_1_uuid=$(generate_uuid)
+nl_ams_2_uuid=$(generate_uuid)
 de_fra_1_uuid=$(generate_uuid)
 
 echo "Generating subscription API token..."
@@ -63,8 +66,12 @@ ru_msk_1_priv=$(parse_private "$ru_msk_1_keys")
 ru_msk_1_pub=$(parse_public "$ru_msk_1_keys")
 ru_msk_2_priv=$(parse_private "$ru_msk_2_keys")
 ru_msk_2_pub=$(parse_public "$ru_msk_2_keys")
+ru_msk_3_priv=$(parse_private "$ru_msk_3_keys")
+ru_msk_3_pub=$(parse_public "$ru_msk_3_keys")
 nl_ams_1_priv=$(parse_private "$nl_ams_1_keys")
 nl_ams_1_pub=$(parse_public "$nl_ams_1_keys")
+nl_ams_2_priv=$(parse_private "$nl_ams_2_keys")
+nl_ams_2_pub=$(parse_public "$nl_ams_2_keys")
 de_fra_1_priv=$(parse_private "$de_fra_1_keys")
 de_fra_1_pub=$(parse_public "$de_fra_1_keys")
 
@@ -74,12 +81,17 @@ output="${output//vault_ru_msk_1_reality_private_key: \"PRIVATE_KEY\"/vault_ru_m
 output="${output//vault_ru_msk_1_reality_public_key: \"PUBLIC_KEY\"/vault_ru_msk_1_reality_public_key: \"$ru_msk_1_pub\"}"
 output="${output//vault_ru_msk_2_reality_private_key: \"PRIVATE_KEY\"/vault_ru_msk_2_reality_private_key: \"$ru_msk_2_priv\"}"
 output="${output//vault_ru_msk_2_reality_public_key: \"PUBLIC_KEY\"/vault_ru_msk_2_reality_public_key: \"$ru_msk_2_pub\"}"
+output="${output//vault_ru_msk_3_reality_private_key: \"PRIVATE_KEY\"/vault_ru_msk_3_reality_private_key: \"$ru_msk_3_priv\"}"
+output="${output//vault_ru_msk_3_reality_public_key: \"PUBLIC_KEY\"/vault_ru_msk_3_reality_public_key: \"$ru_msk_3_pub\"}"
 output="${output//vault_nl_ams_1_reality_private_key: \"PRIVATE_KEY\"/vault_nl_ams_1_reality_private_key: \"$nl_ams_1_priv\"}"
 output="${output//vault_nl_ams_1_reality_public_key: \"PUBLIC_KEY\"/vault_nl_ams_1_reality_public_key: \"$nl_ams_1_pub\"}"
+output="${output//vault_nl_ams_2_reality_private_key: \"PRIVATE_KEY\"/vault_nl_ams_2_reality_private_key: \"$nl_ams_2_priv\"}"
+output="${output//vault_nl_ams_2_reality_public_key: \"PUBLIC_KEY\"/vault_nl_ams_2_reality_public_key: \"$nl_ams_2_pub\"}"
 output="${output//vault_de_fra_1_reality_private_key: \"PRIVATE_KEY\"/vault_de_fra_1_reality_private_key: \"$de_fra_1_priv\"}"
 output="${output//vault_de_fra_1_reality_public_key: \"PUBLIC_KEY\"/vault_de_fra_1_reality_public_key: \"$de_fra_1_pub\"}"
 output="${output//vault_client_uuid: \"UUID\"/vault_client_uuid: \"$client_uuid\"}"
 output="${output//vault_nl_ams_1_uuid: \"UUID\"/vault_nl_ams_1_uuid: \"$nl_ams_1_uuid\"}"
+output="${output//vault_nl_ams_2_uuid: \"UUID\"/vault_nl_ams_2_uuid: \"$nl_ams_2_uuid\"}"
 output="${output//vault_de_fra_1_uuid: \"UUID\"/vault_de_fra_1_uuid: \"$de_fra_1_uuid\"}"
 output="${output//vault_subscription_api_token: \"REPLACE_WITH_LONG_RANDOM_HEX_OR_UUID\"/vault_subscription_api_token: \"$subscription_api_token\"}"
 
@@ -88,6 +100,6 @@ echo "$output" > "$VAULT_OUT"
 echo "Written: $VAULT_OUT"
 echo ""
 echo "Next steps:"
-echo "  1. Edit $VAULT_OUT and set vault_*_ip for each server (ru_msk_1, ru_msk_2, nl_ams_1, de_fra_1)"
+echo "  1. Edit $VAULT_OUT and set vault_*_ip for each server (ru_msk_1, ru_msk_2, ru_msk_3, nl_ams_1, nl_ams_2, de_fra_1)"
 echo "  2. Run: make encrypt"
 echo ""

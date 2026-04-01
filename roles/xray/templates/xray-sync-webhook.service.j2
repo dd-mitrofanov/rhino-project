@@ -1,0 +1,13 @@
+[Unit]
+Description=Trigger Telegram bot Xray user sync when xray container starts
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/xray-sync-webhook.sh
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,46 @@
+---
+- name: Assert telegram_bot group exists (needed for webhook URL)
+  ansible.builtin.assert:
+    that:
+      - groups['telegram_bot'] is defined
+      - groups['telegram_bot'] | length > 0
+
+- name: Install curl for xray sync webhook
+  ansible.builtin.apt:
+    name: curl
+    state: present
+    cache_valid_time: 3600
+
+- name: Install xray sync webhook environment
+  ansible.builtin.template:
+    src: xray-sync-webhook.env.j2
+    dest: /etc/xray-sync-webhook.env
+    mode: "0600"
+    owner: root
+    group: root
+  notify: restart xray-sync-webhook
+
+- name: Install xray sync webhook script
+  ansible.builtin.copy:
+    src: xray-sync-webhook.sh
+    dest: /usr/local/bin/xray-sync-webhook.sh
+    mode: "0755"
+    owner: root
+    group: root
+  notify: restart xray-sync-webhook
+
+- name: Install xray sync webhook systemd unit
+  ansible.builtin.template:
+    src: xray-sync-webhook.service.j2
+    dest: /etc/systemd/system/xray-sync-webhook.service
+    mode: "0644"
+  notify: restart xray-sync-webhook
+
+- name: Apply xray-sync-webhook updates before ensure
+  ansible.builtin.meta: flush_handlers
+
+- name: Ensure xray-sync-webhook is enabled and running
+  ansible.builtin.systemd:
+    name: xray-sync-webhook
+    enabled: true
+    state: started

@@ -1,4 +1,4 @@
-.PHONY: deploy-vpn deploy-full deploy-ru deploy-foreign deploy-telegram deploy-subscription-external deploy-monitoring deploy-test-server setup geodata encrypt decrypt edit-secrets gen-keys gen-keys-test lint check ensure-vault-link
+.PHONY: deploy-vpn deploy-full deploy-ru deploy-foreign deploy-telegram deploy-subscription-external deploy-monitoring deploy-test-server setup geodata encrypt decrypt edit-secrets gen-keys gen-keys-test gen-keys-and-uuids lint check ensure-vault-link
 
 # Vault must be loaded with inventory; group_vars/all/vault.yml symlink makes it available at parse time.
 ensure-vault-link:
@@ -55,6 +55,9 @@ gen-keys:
 
 gen-keys-test:
 	bash scripts/generate-keys-test.sh
+
+gen-keys-and-uuids:
+	bash scripts/gen_keys_and_uuids.sh
 
 lint:
 	ansible-lint playbooks/
