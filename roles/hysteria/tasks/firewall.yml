@@ -1,0 +1,13 @@
+---
+- name: Allow Hysteria QUIC (UDP) from anywhere
+  community.general.ufw:
+    rule: allow
+    port: "{{ hysteria_listen_port | string }}"
+    proto: udp
+
+- name: Allow Hysteria credential sync from Telegram bot host
+  community.general.ufw:
+    rule: allow
+    port: "{{ hysteria_sync_port | string }}"
+    proto: tcp
+    from_ip: "{{ vault_nl_ams_1_ip }}"

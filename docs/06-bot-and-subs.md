@@ -9,10 +9,12 @@ The **Telegram bot** and **PostgreSQL** run on the **`telegram_bot`** host (defa
 | Piece | Where | Role |
 |-------|-------|------|
 | **Bot + DB** | `nl-ams-1` (Docker) | Invites, admin flows, subscription HTTP handler |
-| **Built-in subscription HTTP** | Bot container | Serves `GET /{token}` with **Bearer** auth; builds `vless://` lines from DB + `RU_SERVERS_JSON` |
+| **Built-in subscription HTTP** | Bot container | Serves `GET /{token}` with **Bearer** auth; builds `vless://` and `hysteria2://` lines from DB + `RU_SERVERS_JSON` |
 | **External stack** | Each **RU relay** | Caddy (TLS) + proxy → forwards to bot; clients use `subscription_api_domain` |
 
-The bot’s environment includes **`RU_SERVERS_JSON`**, generated at deploy time from `ru_servers` in `configs/production/vars/servers.yml` and Reality public keys from Vault (`playbooks/deploy-telegram-bot.yml`).
+The bot’s environment includes **`RU_SERVERS_JSON`**, generated at deploy time from `ru_servers` in `configs/production/vars/servers.yml`, Reality public keys from Vault, and **Hysteria** fields (`hysteria_port`, `hysteria_sni` from `configs/production/vars/hysteria.yml`) — see `playbooks/deploy-telegram-bot.yml`.
+
+Per-subscription **Hysteria passwords** live in PostgreSQL (`subscriptions.hysteria_password`). Env **`HYSTERIA_SYNC_ENDPOINTS`** lists `address:hysteria_sync_port` for each RU; **`HYSTERIA_SYNC_TOKEN`** must match **`vault_hysteria_sync_token`** on relays.
 
 ---
 
@@ -32,11 +34,11 @@ Point **`subscription_api_domain`** to **every RU relay** with **multiple A reco
 
 ---
 
-## 4. Syncing users to Xray
+## 4. Syncing users to Xray and Hysteria
 
-When subscriptions are created, revoked, or updated, the bot uses **gRPC** against each RU relay (`XRAY_GRPC_ENDPOINTS` — `address:xray_grpc_port` for each `ru_servers` entry) to add/remove **VLESS** users on inbound `vless-in`. Periodic sync can reconcile state after restarts (see `bot/app/config.py` for intervals).
+When subscriptions are created, revoked, or updated, the bot uses **gRPC** against each RU relay (`XRAY_GRPC_ENDPOINTS` — `address:xray_grpc_port` for each `ru_servers` entry) to add/remove **VLESS** users on inbound `vless-in`. In parallel, it **POST**s the active subscription list to each RU’s Hysteria sync HTTP port (`HYSTERIA_SYNC_ENDPOINTS` / `HYSTERIA_SYNC_TOKEN`) so **userpass** on the Hysteria server matches PostgreSQL. Periodic sync runs both paths (see `bot/app/config.py` for intervals).
 
-**After Xray restarts on an RU relay**, in-memory VLESS clients are empty until the bot runs sync again. Each RU host runs a small **`xray-sync-webhook`** systemd service (installed by the `xray` role) that watches `docker events` for the `xray` container **start** and sends **`POST /internal/xray-sync`** to the bot’s internal HTTP port (`subscription_api_internal_hostname` / IP and `subscription_api_internal_port`), with the same **Bearer** token as the subscription API (`vault_subscription_api_token`). That triggers a full `sync_all_subscriptions` from PostgreSQL without restarting the bot. UFW on the bot host should already allow that port only from RU relay IPs (see `roles/telegram-bot/tasks/main.yml`).
+**After Xray restarts on an RU relay**, in-memory VLESS clients are empty until the bot runs sync again. Each RU host runs a small **`xray-sync-webhook`** systemd service (installed by the `xray` role) that watches `docker events` for the `xray` container **start** and sends **`POST /internal/xray-sync`** to the bot’s internal HTTP port (`subscription_api_internal_hostname` / IP and `subscription_api_internal_port`), with the same **Bearer** token as the subscription API (`vault_subscription_api_token`). That triggers a full `sync_all_subscriptions` from PostgreSQL (including Hysteria) without restarting the bot. UFW on the bot host should already allow that port only from RU relay IPs (see `roles/telegram-bot/tasks/main.yml`).
 
 **Important:** `vault_client_uuid` is shared across RU inbounds for user keys; per-relay **Reality key pairs** still differ and are embedded in `RU_SERVERS_JSON` for generated links.
 

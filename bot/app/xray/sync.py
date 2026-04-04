@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from app.config import settings
 from app.db import repositories as repo
+from app.hysteria.sync import sync_hysteria_credentials
 from app.xray.grpc_client import XrayClientError, add_vless_client, remove_vless_client
 from app.xray.subscription_email import legacy_xray_subscription_email, xray_subscription_email
 
@@ -48,4 +49,9 @@ async def sync_all_subscriptions(session_factory: async_sessionmaker) -> None:
                 "Failed to sync client %s, will retry next cycle", email,
             )
 
-    logger.info("Sync complete")
+    logger.info("Xray sync complete")
+
+    try:
+        await sync_hysteria_credentials(session_factory)
+    except Exception:
+        logger.exception("Hysteria credential sync failed, will retry next cycle")

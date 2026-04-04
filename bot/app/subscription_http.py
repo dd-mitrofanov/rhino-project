@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.config import settings
 from app.db.engine import AsyncSessionLocal
 from app.db.repositories import get_subscription_by_token
+from app.hysteria_uri import build_hysteria2_link
 from app.vless import build_vless_link
 from app.xray.sync import sync_all_subscriptions
 
@@ -51,7 +52,7 @@ app = FastAPI(docs_url=None, redoc_url=None)
 async def trigger_xray_sync(
     _: None = Depends(verify_bearer_token),
 ) -> dict[str, str]:
-    """Re-push all active VLESS clients to RU Xray nodes (same Bearer as subscription API)."""
+    """Re-push all active subscriptions to RU Xray (gRPC) and Hysteria (HTTP) (same Bearer)."""
     await sync_all_subscriptions(AsyncSessionLocal)
     return {"status": "ok"}
 
@@ -70,6 +71,7 @@ async def get_subscription(
     random.shuffle(servers)
     links = []
     for server in servers:
+        base = f"{_two_digit_prefix(subscription.token, server['tag'])}-{server['tag']}"
         links.append(
             build_vless_link(
                 vless_uuid=str(subscription.vless_uuid),
@@ -78,7 +80,19 @@ async def get_subscription(
                 reality_public_key=server["reality_public_key"],
                 sni_domain=server["sni_domain"],
                 short_id=server.get("short_id", ""),
-                server_name=f"{_two_digit_prefix(subscription.token, server['tag'])}-{server['tag']}",
+                server_name=f"{base}-xhttp",
+            )
+        )
+    for server in servers:
+        base = f"{_two_digit_prefix(subscription.token, server['tag'])}-{server['tag']}"
+        links.append(
+            build_hysteria2_link(
+                username=subscription.token,
+                password=subscription.hysteria_password,
+                server_address=server["address"],
+                server_port=int(server["hysteria_port"]),
+                sni=str(server["hysteria_sni"]),
+                server_name=f"{base}-hysteria-2",
             )
         )
     return PlainTextResponse("\n".join(links) + "\n")

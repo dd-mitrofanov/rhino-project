@@ -1,0 +1,32 @@
+---
+- name: Create Hysteria directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0755"
+  loop:
+    - "{{ hysteria_config_dir }}"
+    - "{{ hysteria_data_dir }}"
+    - "{{ hysteria_tls_dir }}"
+    - /opt/hysteria
+
+- name: Install PyYAML for credential sync service
+  ansible.builtin.apt:
+    name: python3-yaml
+    state: present
+    cache_valid_time: 3600
+
+- name: Generate self-signed TLS for Hysteria
+  ansible.builtin.include_tasks: tls.yml
+
+- name: Render Hysteria configuration files
+  ansible.builtin.include_tasks: config_render.yml
+
+- name: Deploy credential sync HTTP service
+  ansible.builtin.include_tasks: sync_service.yml
+
+- name: Configure firewall for Hysteria
+  ansible.builtin.include_tasks: firewall.yml
+
+- name: Run Hysteria Docker container
+  ansible.builtin.include_tasks: docker_run.yml

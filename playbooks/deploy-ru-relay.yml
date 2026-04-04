@@ -7,10 +7,12 @@
     - ../configs/production/secrets/vault.yml
     - ../configs/production/vars/servers.yml
     - ../configs/production/vars/xray.yml
+    - ../configs/production/vars/hysteria.yml
     - ../configs/production/vars/monitoring.yml
 
   roles:
     - role: xray
+    - role: hysteria
 
   post_tasks:
     - name: Verify Xray is listening
@@ -41,3 +43,12 @@
           - item.stat.exists
         fail_msg: "Geodata file {{ item.item }} is missing!"
       loop: "{{ geodata_check.results }}"
+
+    - name: Check Hysteria container status
+      ansible.builtin.command: docker ps --filter name=hysteria --format "{% raw %}{{.Status}}{% endraw %}"
+      changed_when: false
+      register: hysteria_container_status
+
+    - name: Display Hysteria container status
+      ansible.builtin.debug:
+        msg: "Hysteria container: {{ hysteria_container_status.stdout }}"

@@ -12,6 +12,9 @@ class Settings(BaseSettings):
 
     # Comma-separated RU relay gRPC endpoints, e.g. "1.2.3.4:10085,5.6.7.8:10085"
     XRAY_GRPC_ENDPOINTS: str = ""
+    # Comma-separated RU Hysteria sync HTTP endpoints, e.g. "1.2.3.4:18081,5.6.7.8:18081"
+    HYSTERIA_SYNC_ENDPOINTS: str = ""
+    HYSTERIA_SYNC_TOKEN: str = ""
     XRAY_INBOUND_TAG: str = "vless-in"
     SUBSCRIPTION_BASE_URL: str = ""
     XRAY_SYNC_INTERVAL_SECONDS: int = 600
@@ -36,6 +39,13 @@ class Settings(BaseSettings):
         if not self.XRAY_GRPC_ENDPOINTS:
             return []
         return [ep.strip() for ep in self.XRAY_GRPC_ENDPOINTS.split(",") if ep.strip()]
+
+    @property
+    def hysteria_sync_endpoint_list(self) -> list[str]:
+        """Parse HYSTERIA_SYNC_ENDPOINTS into a list of 'host:port' strings."""
+        if not self.HYSTERIA_SYNC_ENDPOINTS:
+            return []
+        return [ep.strip() for ep in self.HYSTERIA_SYNC_ENDPOINTS.split(",") if ep.strip()]
 
 
 settings = Settings()  # type: ignore[call-arg]

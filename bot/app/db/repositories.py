@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import random
+import secrets
 import uuid
 
 from sqlalchemy import delete, func, select, update
@@ -242,6 +243,7 @@ async def create_subscription(
         user_telegram_id=user_telegram_id,
         label=label,
         token=uuid.uuid4().hex,
+        hysteria_password=secrets.token_urlsafe(32),
     )
     session.add(subscription)
     await session.flush()

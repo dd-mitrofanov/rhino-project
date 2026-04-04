@@ -1,0 +1,16 @@
+listen: 0.0.0.0:{{ hysteria_listen_port }}
+
+tls:
+  cert: {{ hysteria_tls_dir }}/cert.pem
+  key: {{ hysteria_tls_dir }}/key.pem
+  sniGuard: disable
+
+auth:
+  type: userpass
+  userpass: {}
+
+outbounds:
+  - name: xray-socks
+    type: socks5
+    socks5:
+      addr: 127.0.0.1:{{ xray_socks_listen_port }}

@@ -5,7 +5,9 @@ import logging
 import uuid
 
 from app.config import settings
+from app.db.engine import AsyncSessionLocal
 from app.db.models import Subscription
+from app.hysteria.sync import sync_hysteria_credentials
 from app.xray.grpc_client import XrayClientError, remove_vless_client
 
 logger = logging.getLogger(__name__)
@@ -52,3 +54,8 @@ async def remove_subscription_from_xray(subscription: Subscription) -> None:
                 "remove_vless_client(%s) failed on all endpoints (likely absent)",
                 email,
             )
+
+    try:
+        await sync_hysteria_credentials(AsyncSessionLocal)
+    except Exception:
+        logger.exception("Hysteria credential sync after remove failed")

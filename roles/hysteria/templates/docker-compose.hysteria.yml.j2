@@ -1,0 +1,16 @@
+---
+services:
+  hysteria:
+    image: "{{ hysteria_docker_image }}:{{ hysteria_docker_tag }}"
+    container_name: hysteria
+    restart: unless-stopped
+    network_mode: host
+    volumes:
+      - "{{ hysteria_config_dir }}/server.yaml:/etc/hysteria/server.yaml"
+      - "{{ hysteria_tls_dir }}:/etc/hysteria/tls:ro"
+    command: ["server", "-c", "/etc/hysteria/server.yaml"]
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"

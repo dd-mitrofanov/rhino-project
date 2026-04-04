@@ -77,6 +77,20 @@
         "destOverride": ["http", "tls", "quic"],
         "routeOnly": {{ xray_sniffing_route_only | to_json }}
       }
+    },
+    {
+      "tag": "socks-hysteria-in",
+      "listen": "127.0.0.1",
+      "port": {{ xray_socks_listen_port }},
+      "protocol": "socks",
+      "settings": {
+        "udp": true
+      },
+      "sniffing": {
+        "enabled": true,
+        "destOverride": ["http", "tls", "quic"],
+        "routeOnly": {{ xray_sniffing_route_only | to_json }}
+      }
     }
   ],
   "outbounds": [

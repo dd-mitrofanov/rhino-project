@@ -68,6 +68,7 @@ class Subscription(Base):
     vless_uuid: Mapped[uuid.UUID] = mapped_column(
         Uuid, unique=True, nullable=False, default=uuid.uuid4,
     )
+    hysteria_password: Mapped[str] = mapped_column(String(128), nullable=False)
     token: Mapped[str] = mapped_column(
         String(64), unique=True, nullable=False,
     )

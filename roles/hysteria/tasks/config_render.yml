@@ -1,0 +1,12 @@
+---
+- name: Render Hysteria server config
+  ansible.builtin.template:
+    src: hysteria-server.yaml.j2
+    dest: "{{ hysteria_config_dir }}/server.yaml"
+    mode: "0644"
+
+- name: Render Hysteria docker-compose
+  ansible.builtin.template:
+    src: docker-compose.hysteria.yml.j2
+    dest: "{{ hysteria_config_dir }}/docker-compose.yml"
+    mode: "0644"

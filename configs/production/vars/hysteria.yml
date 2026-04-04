@@ -1,0 +1,23 @@
+---
+# Hysteria2 on RU relays (UDP entry → loopback SOCKS → Xray). See docs/add-hysteria2-ru/overview.md
+
+# Docker Hub (official per https://v2.hysteria.network/docs/getting-started/Installation)
+hysteria_docker_image: tobyxdd/hysteria
+# Pin a release tag: https://github.com/apernet/hysteria/releases
+hysteria_docker_tag: v2.5.0
+
+# UDP listen (distinct from xray_inbound_port TCP 443)
+hysteria_listen_port: 8443
+
+# TCP port on 0.0.0.0 for credential sync from the Telegram bot host (firewall: bot IP only)
+hysteria_sync_port: 18081
+
+# Xray SOCKS inbound for Hysteria → existing routing (127.0.0.1 only)
+xray_socks_listen_port: 10808
+
+# Self-signed TLS CN/SAN for Hysteria only (clients use insecure=1 or pin SPKI later)
+hysteria_tls_cn: hysteria.internal
+
+hysteria_config_dir: /etc/hysteria
+hysteria_data_dir: /var/lib/hysteria
+hysteria_tls_dir: /etc/hysteria/tls

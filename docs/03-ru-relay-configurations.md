@@ -2,7 +2,7 @@
 
 This document describes how RU relays are configured in this project: inbound path, routing, balancer, observatory, and integration with the bot.
 
-Templates and variables: `configs/production/templates/ru-relay.json.j2`, `configs/production/vars/xray.yml`, `configs/production/vars/servers.yml`, secrets in `configs/production/secrets/vault.yml`.
+Templates and variables: `configs/production/templates/ru-relay.json.j2`, `configs/production/vars/xray.yml`, `configs/production/vars/hysteria.yml`, `configs/production/vars/servers.yml`, secrets in `configs/production/secrets/vault.yml`.
 
 ---
 
@@ -11,6 +11,7 @@ Templates and variables: `configs/production/templates/ru-relay.json.j2`, `confi
 RU relays are the **only** place where users connect. They:
 
 - Terminate **VLESS + Reality** with **XHTTP** in **packet-up** mode (mobile-friendly, DPI-resistant).
+- Optionally terminate **Hysteria2** (QUIC/UDP) on a **separate port** (`hysteria_listen_port` in `hysteria.yml`); traffic is forwarded to a **loopback-only SOCKS5** inbound on Xray (`socks-hysteria-in` on `127.0.0.1:xray_socks_listen_port`) so routing matches VLESS users. Hysteria uses a **self-signed TLS** cert on the relay (`hysteria_tls_cn`), not the public subscription domain.
 - **Sniff** HTTP/TLS/QUIC so domain-based rules work even when clients connect by IP.
 - Route Russian / private traffic **direct**; send other traffic to **foreign exits** via a **balancer** backed by **observatory**.
 - Expose the **Xray gRPC API** on the public host so the Telegram bot can add/remove VLESS users dynamically.
@@ -37,6 +38,10 @@ Sniffing: `xray_sniffing_route_only` controls whether overrides apply only to ro
 ## 3. API inbound (control plane)
 
 A **dokodemo-door** inbound (`api-in`) listens on **`0.0.0.0:xray_grpc_port`** (default **10085**) and forwards to the API service. The Telegram bot uses this to sync user UUIDs to each RU relay.
+
+### Hysteria credential sync (HTTP)
+
+There is **no** gRPC API for Hysteria users. A small **Python** service on each RU (`hysteria-sync.service`) listens on **`hysteria_sync_port`** (TCP). The bot **POST**s a full user list (`Bearer` `vault_hysteria_sync_token`); the handler rewrites `auth.userpass` in `server.yaml` and restarts the **hysteria** container. UFW allows this port **only** from the Telegram bot host (`vault_nl_ams_1_ip`).
 
 ---
 

@@ -1,0 +1,24 @@
+---
+- name: Generate self-signed TLS for Hysteria (RU-only)
+  ansible.builtin.command:
+    argv:
+      - openssl
+      - req
+      - -x509
+      - -newkey
+      - rsa:2048
+      - -keyout
+      - "{{ hysteria_tls_dir }}/key.pem"
+      - -out
+      - "{{ hysteria_tls_dir }}/cert.pem"
+      - -days
+      - "3650"
+      - -nodes
+      - -subj
+      - "/CN={{ hysteria_tls_cn }}"
+    creates: "{{ hysteria_tls_dir }}/cert.pem"
+
+- name: Restrict TLS private key permissions
+  ansible.builtin.file:
+    path: "{{ hysteria_tls_dir }}/key.pem"
+    mode: "0600"

@@ -14,6 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
 from app.db import repositories as repo
+from app.db.engine import AsyncSessionLocal
 from app.db.repositories import SubscriptionLimitError
 from app.keyboards.menus import (
     LABEL_PRESET_LABELS,
@@ -29,6 +30,7 @@ from app.keyboards.menus import (
     subscription_single_delete_keyboard,
     subscription_single_revoke_keyboard,
 )
+from app.hysteria.sync import sync_hysteria_credentials
 from app.xray.grpc_client import XrayClientError, add_vless_client
 from app.xray.subscription_email import (
     remove_subscription_from_xray,
@@ -171,6 +173,11 @@ async def _create_and_send_subscription(
         xray_warning = (
             "\n\n⚠️ Ключ создан, но активация VPN может занять некоторое время."
         )
+
+    try:
+        await sync_hysteria_credentials(AsyncSessionLocal)
+    except Exception:
+        logger.exception("Hysteria credential sync failed for %s", email)
 
     url = _sub_url(subscription)
 

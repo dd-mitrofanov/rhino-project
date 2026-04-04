@@ -1,0 +1,16 @@
+[Unit]
+Description=Hysteria credential sync HTTP (bot push)
+After=network.target
+
+[Service]
+Type=simple
+Environment=HYSTERIA_SYNC_TOKEN={{ vault_hysteria_sync_token }}
+Environment=HYSTERIA_SYNC_PORT={{ hysteria_sync_port }}
+Environment=HYSTERIA_SERVER_CONFIG_PATH={{ hysteria_config_dir }}/server.yaml
+Environment=HYSTERIA_COMPOSE_DIR={{ hysteria_config_dir }}
+ExecStart=/usr/bin/python3 /opt/hysteria/hysteria_sync_server.py
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

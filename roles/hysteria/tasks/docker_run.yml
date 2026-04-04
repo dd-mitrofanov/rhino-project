@@ -1,0 +1,11 @@
+---
+- name: Pull Hysteria image
+  community.docker.docker_image:
+    name: "{{ hysteria_docker_image }}"
+    tag: "{{ hysteria_docker_tag }}"
+    source: pull
+
+- name: Start Hysteria container
+  community.docker.docker_compose_v2:
+    project_src: "{{ hysteria_config_dir }}"
+    state: present
