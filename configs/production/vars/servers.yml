@@ -14,14 +14,14 @@ foreign_servers:
     location: amsterdam
 
 ru_servers:
-  - tag: ru-msk-1
-    address: "{{ vault_ru_msk_1_ip }}"
-    port: 443
-    location: moscow
-  # - tag: ru-msk-2
-  #   address: "{{ vault_ru_msk_2_ip }}"
+  # - tag: ru-msk-1
+  #   address: "{{ vault_ru_msk_1_ip }}"
   #   port: 443
   #   location: moscow
+  - tag: ru-spb-1
+    address: "{{ vault_ru_spb_1_ip }}"
+    port: 443
+    location: saint-petersburg
   - tag: ru-msk-3
     address: "{{ vault_ru_msk_3_ip }}"
     port: 443
