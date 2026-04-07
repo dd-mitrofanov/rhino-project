@@ -29,6 +29,7 @@ from app.keyboards.menus import (
     subscription_list_back_keyboard,
     subscription_single_delete_keyboard,
     subscription_single_revoke_keyboard,
+    whitelist_choice_keyboard,
 )
 from app.hysteria.sync import sync_hysteria_credentials
 from app.xray.grpc_client import XrayClientError, add_vless_client
@@ -89,6 +90,11 @@ SKIP_LABEL_NOUNS: tuple[str, ...] = (
 )
 
 _SUB_LABEL_UNKNOWN_CHOICE_RU = "Не удалось распознать выбор. Используйте кнопки меню."
+_SUB_WL_STALE_RU = "Сессия устарела. Начните создание ключа заново через меню."
+
+WHITELIST_PROMPT_RU = (
+    "Выпустить ключ с поддержкой обхода блокировок по белым спискам? Выберите Да, только если вы планируете использовать данный ключ на телефоне и в вашем регионе блокируют мобильный интернет. Можно выпустить только 1 ключ для обхода белых списков"
+)
 
 
 def _keys_form_after_number(n: int) -> str:
@@ -105,6 +111,7 @@ router = Router()
 
 class SubAddStates(StatesGroup):
     waiting_for_label = State()
+    waiting_for_whitelist_choice = State()
 
 
 def _sub_url(subscription: repo.Subscription) -> str:
@@ -134,6 +141,47 @@ def _format_key_message(
     return f"{name}. {date_str}\n<pre><code>{escaped}</code></pre>"
 
 
+async def _resolve_whitelist_or_prompt(
+    session: AsyncSession,
+    user: repo.User,
+    label: str,
+    answer_func,  # noqa: ANN001
+    state: FSMContext,
+) -> bool:
+    """Return True if creation ran (or limit error). False if whitelist prompt was shown."""
+    if user.role == "admin":
+        await state.clear()
+        await _create_and_send_subscription(
+            session,
+            user.telegram_id,
+            label,
+            answer_func,
+            role=user.role,
+            is_whitelist=True,
+        )
+        return True
+
+    if await repo.user_has_active_whitelist_subscription(session, user.telegram_id):
+        await state.clear()
+        await _create_and_send_subscription(
+            session,
+            user.telegram_id,
+            label,
+            answer_func,
+            role=user.role,
+            is_whitelist=False,
+        )
+        return True
+
+    await state.set_state(SubAddStates.waiting_for_whitelist_choice)
+    await state.update_data(pending_label=label)
+    await answer_func(
+        WHITELIST_PROMPT_RU,
+        reply_markup=whitelist_choice_keyboard(),
+    )
+    return False
+
+
 async def _create_and_send_subscription(
     session: AsyncSession,
     user_telegram_id: int,
@@ -141,10 +189,15 @@ async def _create_and_send_subscription(
     answer_func,  # noqa: ANN001
     *,
     role: str = "l1",
+    is_whitelist: bool,
 ) -> None:
     try:
         subscription = await repo.create_subscription(
-            session, user_telegram_id, label, role=role,
+            session,
+            user_telegram_id,
+            label,
+            role=role,
+            is_whitelist=is_whitelist,
         )
     except SubscriptionLimitError:
         m = repo.MAX_ACTIVE_SUBSCRIPTIONS
@@ -194,10 +247,13 @@ async def _create_and_send_subscription(
 # ── Add Subscription ────────────────────────────────────────────────
 
 @router.message(Command("sub_add"))
-async def cmd_sub_add(message: Message, session: AsyncSession) -> None:
+async def cmd_sub_add(
+    message: Message, session: AsyncSession, state: FSMContext,
+) -> None:
     user = await _get_registered_user(session, message.from_user.id, message.answer)  # type: ignore[union-attr]
     if not user:
         return
+    await state.clear()
     await message.answer(
         "Выберите название для ключа:", reply_markup=label_keyboard(),
     )
@@ -260,12 +316,12 @@ async def sub_label_chosen(
             return
         label = f"{random.choice(SKIP_LABEL_ADJECTIVES)} {random.choice(SKIP_LABEL_NOUNS)}"
         logger.debug("sub_label skip: generated label=%r", label)
-        await _create_and_send_subscription(
+        await _resolve_whitelist_or_prompt(
             session,
-            callback.from_user.id,
+            user,
             label,
             callback.message.answer,  # type: ignore[union-attr]
-            role=user.role,
+            state,
         )
         await callback.answer()
         return
@@ -280,12 +336,12 @@ async def sub_label_chosen(
             await callback.answer(_SUB_LABEL_UNKNOWN_CHOICE_RU, show_alert=True)
             return
         logger.debug("sub_label preset: code=%r", code)
-        await _create_and_send_subscription(
+        await _resolve_whitelist_or_prompt(
             session,
-            callback.from_user.id,
+            user,
             display,
             callback.message.answer,  # type: ignore[union-attr]
-            role=user.role,
+            state,
         )
         await callback.answer()
         return
@@ -309,14 +365,49 @@ async def sub_label_typed(
         )
         return
 
+    await _resolve_whitelist_or_prompt(
+        session,
+        user,
+        label,
+        message.answer,
+        state,
+    )
+
+
+@router.callback_query(lambda cb: cb.data in ("sub_wl:yes", "sub_wl:no"))
+async def sub_whitelist_chosen(
+    callback: CallbackQuery, session: AsyncSession, state: FSMContext,
+) -> None:
+    user = await _get_registered_user(
+        session, callback.from_user.id, callback.message.answer,  # type: ignore[union-attr]
+    )
+    if not user:
+        await callback.answer()
+        return
+
+    if await state.get_state() != SubAddStates.waiting_for_whitelist_choice.state:
+        await callback.answer(_SUB_WL_STALE_RU, show_alert=True)
+        return
+
+    data = await state.get_data()
+    label = data.get("pending_label")
+    if not label or not isinstance(label, str):
+        await callback.answer(_SUB_WL_STALE_RU, show_alert=True)
+        return
+
+    kind = (callback.data or "").split(":", 1)[-1]  # type: ignore[union-attr]
+    is_whitelist = kind == "yes"
+
     await state.clear()
     await _create_and_send_subscription(
         session,
-        message.from_user.id,
+        callback.from_user.id,
         label,
-        message.answer,
+        callback.message.answer,  # type: ignore[union-attr]
         role=user.role,
+        is_whitelist=is_whitelist,
     )
+    await callback.answer()
 
 
 # ── List Subscriptions ──────────────────────────────────────────────

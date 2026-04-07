@@ -65,6 +65,24 @@ def _server(tag: str, *, wl: bool | None) -> dict:
 
 
 @patch("app.subscription_format.random.shuffle", lambda x: None)
+def test_build_subscription_lines_null_subscription_flag_matches_full() -> None:
+    """DB is_whitelist NULL: same server list as True (includes per-server WL entries)."""
+    servers = [
+        _server("b", wl=False),
+        _server("a", wl=True),
+        _server("z", wl=None),
+    ]
+    lines = build_subscription_link_lines(
+        subscription_token="subtok",
+        vless_uuid="550e8400-e29b-41d4-a716-446655440000",
+        hysteria_password="pw",
+        servers=servers,
+        subscription_is_whitelist=None,
+    )
+    assert len(lines) == 6
+
+
+@patch("app.subscription_format.random.shuffle", lambda x: None)
 def test_build_subscription_lines_segment_order_and_no_legacy_names() -> None:
     servers = [
         _server("b", wl=False),

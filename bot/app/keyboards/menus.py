@@ -41,6 +41,18 @@ def broadcast_sending_keyboard() -> InlineKeyboardMarkup:
     )
 
 
+def whitelist_choice_keyboard() -> InlineKeyboardMarkup:
+    """Да/Нет для выпуска ключа с обходом белых списков (sub_wl:yes / sub_wl:no)."""
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(text="Да", callback_data="sub_wl:yes"),
+                InlineKeyboardButton(text="Нет", callback_data="sub_wl:no"),
+            ],
+        ],
+    )
+
+
 def broadcast_prompt_keyboard() -> InlineKeyboardMarkup:
     """Назад в главное меню из шага ввода рассылки (broadcast:back)."""
     return InlineKeyboardMarkup(

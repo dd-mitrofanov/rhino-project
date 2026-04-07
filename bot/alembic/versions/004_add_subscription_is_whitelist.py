@@ -22,8 +22,7 @@ def upgrade() -> None:
         sa.Column(
             "is_whitelist",
             sa.Boolean(),
-            server_default=sa.text("true"),
-            nullable=False,
+            nullable=True,
         ),
     )
 

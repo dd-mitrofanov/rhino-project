@@ -48,15 +48,16 @@ def build_subscription_link_lines(
     vless_uuid: str,
     hysteria_password: str,
     servers: list[dict],
-    subscription_is_whitelist: bool = True,
+    subscription_is_whitelist: bool | None = None,
 ) -> list[str]:
     """Four-group global order; shuffle a copy of each group; emit vless then hysteria2 per spec.
 
     subscription_is_whitelist reflects the subscription key (full vs restricted), not the
     per-server ``is_whitelist`` field in each dict. When False, only non-whitelist servers
-    are included before the usual partition and four-group pipeline.
+    are included before the usual partition and four-group pipeline. When True or None
+    (unset / legacy), whitelist servers are included like a full key.
     """
-    if not subscription_is_whitelist:
+    if subscription_is_whitelist is False:
         servers = [s for s in servers if not _is_whitelist(s)]
     non_wl = [s for s in servers if not _is_whitelist(s)]
     wl = [s for s in servers if _is_whitelist(s)]

@@ -231,6 +231,7 @@ async def create_subscription(
     label: str,
     *,
     role: str = "l1",
+    is_whitelist: bool,
 ) -> Subscription:
     if role != "admin":
         count = await count_active_subscriptions(session, user_telegram_id)
@@ -244,7 +245,7 @@ async def create_subscription(
         label=label,
         token=uuid.uuid4().hex,
         hysteria_password=secrets.token_urlsafe(32),
-        is_whitelist=True,
+        is_whitelist=is_whitelist,
     )
     session.add(subscription)
     await session.flush()
@@ -344,6 +345,22 @@ async def count_active_subscriptions(
         ),
     )
     return result.scalar_one()
+
+
+async def user_has_active_whitelist_subscription(
+    session: AsyncSession,
+    user_telegram_id: int,
+) -> bool:
+    result = await session.execute(
+        select(func.count())
+        .select_from(Subscription)
+        .where(
+            Subscription.user_telegram_id == user_telegram_id,
+            Subscription.active.is_(True),
+            Subscription.is_whitelist.is_(True),
+        ),
+    )
+    return result.scalar_one() > 0
 
 
 # ---------------------------------------------------------------------------
