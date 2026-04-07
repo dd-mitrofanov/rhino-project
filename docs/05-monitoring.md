@@ -55,7 +55,7 @@ Scrape lists are rendered from **`configs/production/vars/servers.yml`** and Vau
 | `configs/production/templates/docker-compose.telegram-bot.yml.j2` | Bot + DB + **user-mapping-exporter** |
 | `configs/production/templates/docker-compose.monitoring.yml.j2` | Prometheus/Grafana/Caddy on `de-fra-1` |
 | `configs/production/templates/Caddyfile.monitoring.j2` | TLS + reverse proxy to Grafana |
-| `configs/production/files/grafana-dashboards/*.json` | Bundled dashboards (Xray, Node/host, RU traffic & Telegram) |
+| `configs/production/files/grafana-dashboards/*.json` | Bundled dashboards (Xray, Node/host, RU traffic & Telegram, unified RU overview) |
 | `mapping-exporter/` | Small Python exporter (Prometheus + PostgreSQL) |
 | `roles/monitoring/` | Install paths, UFW, compose, provisioning |
 | `playbooks/deploy-monitoring.yml` | Runs on `de-fra-1` |
@@ -96,7 +96,7 @@ Caddy obtains Let’s Encrypt certificates using HTTP-01; **port 80** must be re
 
 4. **Grafana UI**: `https://<vault_grafana_domain>:8443` (replace port if you changed `grafana_https_port`).
 
-Bundled dashboards include **Rhino / Node & host** (`node-overview.json`) and **Rhino / RU traffic & Telegram** (`rhino-traffic-telegram.json`). The latter uses inbound tag **`vless-in`** by default; if you change **`xray_inbound_tag`** in `configs/production/vars/xray.yml`, update the dashboard queries to match.
+Bundled dashboards include **Rhino / Node & host** (`node-overview.json`), **Rhino / RU traffic & Telegram** (`rhino-traffic-telegram.json`), and **Rhino — обзор (RU)** (`rhino-universal-ru.json`), which combines host metrics, Xray inbound **`vless-in`** traffic (per server and RU totals), Telegram-linked user traffic, and RU relay network load. The traffic dashboards use inbound tag **`vless-in`** by default; if you change **`xray_inbound_tag`** in `configs/production/vars/xray.yml`, update the dashboard queries to match.
 
 ---
 

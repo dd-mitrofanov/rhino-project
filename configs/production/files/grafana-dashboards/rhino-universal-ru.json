@@ -1,0 +1,726 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "id": 100,
+      "panels": [],
+      "title": "Хост (node_exporter)",
+      "type": "row"
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": "Prometheus",
+      "fieldConfig": { "defaults": { "custom": {} }, "overrides": [] },
+      "fill": 1,
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 1 },
+      "id": 1,
+      "legend": {
+        "alignAsTable": true,
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "rightSide": true,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "nullPointMode": "null",
+      "percentage": false,
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "expr": "100 * (1 - avg by (server, instance) (rate(node_cpu_seconds_total{mode=\"idle\",job=\"node\",server=~\"$server\"}[5m])))",
+          "legendFormat": "{{server}}",
+          "refId": "A"
+        }
+      ],
+      "thresholds": [],
+      "title": "Загрузка CPU, %",
+      "tooltip": { "shared": true, "sort": 0, "value_type": "individual" },
+      "type": "graph",
+      "xaxis": { "mode": "time", "show": true },
+      "yaxes": [
+        { "format": "percent", "max": 100, "min": 0, "show": true },
+        { "format": "short", "show": false }
+      ]
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "datasource": "Prometheus",
+      "fieldConfig": { "defaults": { "custom": {} }, "overrides": [] },
+      "fill": 1,
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 1 },
+      "id": 2,
+      "legend": {
+        "alignAsTable": true,
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "rightSide": true,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "nullPointMode": "null",
+      "percentage": false,
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "expr": "node_memory_MemAvailable_bytes{job=\"node\",server=~\"$server\"} / node_memory_MemTotal_bytes{job=\"node\",server=~\"$server\"} * 100",
+          "legendFormat": "{{server}} доступно %",
+          "refId": "A"
+        }
+      ],
+      "thresholds": [],
+      "title": "Доступная память, %",
+      "tooltip": { "shared": true, "sort": 0, "value_type": "individual" },
+      "type": "graph",
+      "xaxis": { "mode": "time", "show": true },
+      "yaxes": [
+        { "format": "percent", "max": 100, "min": 0, "show": true },
+        { "format": "short", "show": false }
+      ]
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "datasource": "Prometheus",
+      "fieldConfig": { "defaults": { "custom": {} }, "overrides": [] },
+      "fill": 1,
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 9 },
+      "id": 3,
+      "legend": {
+        "alignAsTable": true,
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "rightSide": true,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "nullPointMode": "null",
+      "percentage": false,
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "expr": "100 * (1 - (node_filesystem_avail_bytes{fstype=~\"ext4|xfs|btrfs\",job=\"node\",server=~\"$server\",mountpoint=\"/\"} / node_filesystem_size_bytes{fstype=~\"ext4|xfs|btrfs\",job=\"node\",server=~\"$server\",mountpoint=\"/\"}))",
+          "legendFormat": "{{server}}",
+          "refId": "A"
+        }
+      ],
+      "thresholds": [],
+      "title": "Заполнение диска, % (корень /)",
+      "tooltip": { "shared": true, "sort": 0, "value_type": "individual" },
+      "type": "graph",
+      "xaxis": { "mode": "time", "show": true },
+      "yaxes": [
+        { "format": "percent", "max": 100, "min": 0, "show": true },
+        { "format": "short", "show": false }
+      ]
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "datasource": "Prometheus",
+      "fieldConfig": { "defaults": { "custom": {} }, "overrides": [] },
+      "fill": 1,
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 9 },
+      "id": 4,
+      "legend": {
+        "alignAsTable": true,
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "rightSide": true,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "nullPointMode": "null",
+      "percentage": false,
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "expr": "sum by (server, device) (rate(node_network_receive_bytes_total{device!~\"lo|docker.*|veth.*|br-.*\",job=\"node\",server=~\"$server\"}[5m]))",
+          "legendFormat": "{{server}} {{device}} приём",
+          "refId": "A"
+        },
+        {
+          "expr": "sum by (server, device) (rate(node_network_transmit_bytes_total{device!~\"lo|docker.*|veth.*|br-.*\",job=\"node\",server=~\"$server\"}[5m]))",
+          "legendFormat": "{{server}} {{device}} передача",
+          "refId": "B"
+        }
+      ],
+      "thresholds": [],
+      "title": "Сетевая нагрузка хоста (без loopback/docker)",
+      "tooltip": { "shared": true, "sort": 0, "value_type": "individual" },
+      "type": "graph",
+      "xaxis": { "mode": "time", "show": true },
+      "yaxes": [
+        { "format": "Bps", "label": null, "logBase": 1, "show": true },
+        { "format": "short", "show": false }
+      ]
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 17 },
+      "id": 101,
+      "panels": [],
+      "title": "Трафик Xray (inbound vless-in; тег как в configs/production/vars/xray.yml → xray_inbound_tag)",
+      "type": "row"
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "datasource": "Prometheus",
+      "fieldConfig": { "defaults": { "custom": {} }, "overrides": [] },
+      "fill": 1,
+      "gridPos": { "h": 7, "w": 12, "x": 0, "y": 18 },
+      "id": 5,
+      "legend": {
+        "alignAsTable": true,
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "rightSide": true,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "nullPointMode": "null",
+      "percentage": false,
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "expr": "sum(increase(xray_traffic_downlink_bytes_total{role=\"ru-relay\",dimension=\"inbound\",target=\"vless-in\"}[$__range]))",
+          "legendFormat": "Даунлинк",
+          "refId": "A"
+        },
+        {
+          "expr": "sum(increase(xray_traffic_uplink_bytes_total{role=\"ru-relay\",dimension=\"inbound\",target=\"vless-in\"}[$__range]))",
+          "legendFormat": "Аплинк",
+          "refId": "B"
+        }
+      ],
+      "thresholds": [],
+      "title": "Сумма по всем RU relay — объём за выбранный период",
+      "tooltip": { "shared": true, "sort": 0, "value_type": "individual" },
+      "type": "graph",
+      "xaxis": { "mode": "time", "show": true },
+      "yaxes": [
+        { "format": "bytes", "label": null, "logBase": 1, "show": true },
+        { "format": "short", "show": false }
+      ]
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "datasource": "Prometheus",
+      "fieldConfig": { "defaults": { "custom": {} }, "overrides": [] },
+      "fill": 1,
+      "gridPos": { "h": 7, "w": 12, "x": 12, "y": 18 },
+      "id": 6,
+      "legend": {
+        "alignAsTable": true,
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "rightSide": true,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "nullPointMode": "null",
+      "percentage": false,
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "expr": "sum(irate(xray_traffic_downlink_bytes_total{role=\"ru-relay\",dimension=\"inbound\",target=\"vless-in\"}[5m]))",
+          "legendFormat": "Даунлинк",
+          "refId": "A"
+        },
+        {
+          "expr": "sum(irate(xray_traffic_uplink_bytes_total{role=\"ru-relay\",dimension=\"inbound\",target=\"vless-in\"}[5m]))",
+          "legendFormat": "Аплинк",
+          "refId": "B"
+        }
+      ],
+      "thresholds": [],
+      "title": "Сумма по всем RU relay — скорость (irate 5m)",
+      "tooltip": { "shared": true, "sort": 0, "value_type": "individual" },
+      "type": "graph",
+      "xaxis": { "mode": "time", "show": true },
+      "yaxes": [
+        { "format": "Bps", "label": null, "logBase": 1, "show": true },
+        { "format": "short", "show": false }
+      ]
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "datasource": "Prometheus",
+      "fieldConfig": { "defaults": { "custom": {} }, "overrides": [] },
+      "fill": 1,
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 25 },
+      "id": 7,
+      "legend": {
+        "alignAsTable": true,
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "rightSide": true,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "nullPointMode": "null",
+      "percentage": false,
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "expr": "sum by (server) (increase(xray_traffic_downlink_bytes_total{dimension=\"inbound\",target=\"vless-in\"}[$__range]))",
+          "legendFormat": "{{server}} даунлинк",
+          "refId": "A"
+        },
+        {
+          "expr": "sum by (server) (increase(xray_traffic_uplink_bytes_total{dimension=\"inbound\",target=\"vless-in\"}[$__range]))",
+          "legendFormat": "{{server}} аплинк",
+          "refId": "B"
+        }
+      ],
+      "thresholds": [],
+      "title": "Трафик по каждому серверу — объём за период (все ноды, inbound vless-in)",
+      "tooltip": { "shared": true, "sort": 0, "value_type": "individual" },
+      "type": "graph",
+      "xaxis": { "mode": "time", "show": true },
+      "yaxes": [
+        { "format": "bytes", "label": null, "logBase": 1, "show": true },
+        { "format": "short", "show": false }
+      ]
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "datasource": "Prometheus",
+      "fieldConfig": { "defaults": { "custom": {} }, "overrides": [] },
+      "fill": 1,
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 33 },
+      "id": 8,
+      "legend": {
+        "alignAsTable": true,
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "rightSide": true,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "nullPointMode": "null",
+      "percentage": false,
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "expr": "sum by (server) (irate(xray_traffic_downlink_bytes_total{dimension=\"inbound\",target=\"vless-in\"}[5m]))",
+          "legendFormat": "{{server}} даунлинк",
+          "refId": "A"
+        },
+        {
+          "expr": "sum by (server) (irate(xray_traffic_uplink_bytes_total{dimension=\"inbound\",target=\"vless-in\"}[5m]))",
+          "legendFormat": "{{server}} аплинк",
+          "refId": "B"
+        }
+      ],
+      "thresholds": [],
+      "title": "Трафик по каждому серверу — скорость (irate 5m)",
+      "tooltip": { "shared": true, "sort": 0, "value_type": "individual" },
+      "type": "graph",
+      "xaxis": { "mode": "time", "show": true },
+      "yaxes": [
+        { "format": "Bps", "label": null, "logBase": 1, "show": true },
+        { "format": "short", "show": false }
+      ]
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "datasource": "Prometheus",
+      "fieldConfig": { "defaults": { "custom": {} }, "overrides": [] },
+      "fill": 1,
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 41 },
+      "id": 9,
+      "legend": {
+        "alignAsTable": true,
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "rightSide": true,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "nullPointMode": "null",
+      "percentage": false,
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "expr": "sum by (server) (increase(xray_traffic_downlink_bytes_total{role=\"ru-relay\",dimension=\"inbound\",target=\"vless-in\"}[$__range]))",
+          "legendFormat": "{{server}} даунлинк",
+          "refId": "A"
+        },
+        {
+          "expr": "sum by (server) (increase(xray_traffic_uplink_bytes_total{role=\"ru-relay\",dimension=\"inbound\",target=\"vless-in\"}[$__range]))",
+          "legendFormat": "{{server}} аплинк",
+          "refId": "B"
+        }
+      ],
+      "thresholds": [],
+      "title": "Разбивка по RU relay — объём за период (vless-in)",
+      "tooltip": { "shared": true, "sort": 0, "value_type": "individual" },
+      "type": "graph",
+      "xaxis": { "mode": "time", "show": true },
+      "yaxes": [
+        { "format": "bytes", "label": null, "logBase": 1, "show": true },
+        { "format": "short", "show": false }
+      ]
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "datasource": "Prometheus",
+      "fieldConfig": { "defaults": { "custom": {} }, "overrides": [] },
+      "fill": 1,
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 49 },
+      "id": 10,
+      "legend": {
+        "alignAsTable": true,
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "rightSide": true,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "nullPointMode": "null",
+      "percentage": false,
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "expr": "sum by (server) (irate(xray_traffic_downlink_bytes_total{role=\"ru-relay\",dimension=\"inbound\",target=\"vless-in\"}[5m]))",
+          "legendFormat": "{{server}} даунлинк",
+          "refId": "A"
+        },
+        {
+          "expr": "sum by (server) (irate(xray_traffic_uplink_bytes_total{role=\"ru-relay\",dimension=\"inbound\",target=\"vless-in\"}[5m]))",
+          "legendFormat": "{{server}} аплинк",
+          "refId": "B"
+        }
+      ],
+      "thresholds": [],
+      "title": "Разбивка по RU relay — скорость (irate)",
+      "tooltip": { "shared": true, "sort": 0, "value_type": "individual" },
+      "type": "graph",
+      "xaxis": { "mode": "time", "show": true },
+      "yaxes": [
+        { "format": "Bps", "label": null, "logBase": 1, "show": true },
+        { "format": "short", "show": false }
+      ]
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 57 },
+      "id": 102,
+      "panels": [],
+      "title": "Пользователи (сопоставление с Telegram через user-mapping exporter)",
+      "type": "row"
+    },
+    {
+      "columns": [],
+      "datasource": "Prometheus",
+      "fieldConfig": { "defaults": { "custom": {} }, "overrides": [] },
+      "fontSize": "100%",
+      "gridPos": { "h": 10, "w": 12, "x": 0, "y": 58 },
+      "id": 11,
+      "pageSize": 50,
+      "showHeader": true,
+      "sort": { "col": 1, "desc": true },
+      "styles": [
+        { "alias": "Время", "dateFormat": "YYYY-MM-DD HH:mm:ss", "pattern": "Time", "type": "hidden" },
+        { "alias": "ID Telegram", "colorMode": null, "pattern": "telegram_id", "type": "string" },
+        { "alias": "Даунлинк за период (ГБ)", "colorMode": null, "decimals": 3, "pattern": "Value #A", "type": "number", "unit": "none" }
+      ],
+      "targets": [
+        {
+          "expr": "topk(50, sum by (telegram_id) ( (increase(xray_traffic_downlink_bytes_total{dimension=\"user\",role=\"ru-relay\"}[$__range])) * on(target) group_left(telegram_id) max by (target, telegram_id) (rhino_vless_user_mapping) ) / 1e9)",
+          "format": "table",
+          "instant": true,
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "title": "Топ даунлинка по ID Telegram (за период)",
+      "transform": "table",
+      "type": "table-old"
+    },
+    {
+      "columns": [],
+      "datasource": "Prometheus",
+      "fieldConfig": { "defaults": { "custom": {} }, "overrides": [] },
+      "fontSize": "100%",
+      "gridPos": { "h": 10, "w": 12, "x": 12, "y": 58 },
+      "id": 12,
+      "pageSize": 50,
+      "showHeader": true,
+      "sort": { "col": 1, "desc": true },
+      "styles": [
+        { "alias": "Время", "dateFormat": "YYYY-MM-DD HH:mm:ss", "pattern": "Time", "type": "hidden" },
+        { "alias": "ID Telegram", "colorMode": null, "pattern": "telegram_id", "type": "string" },
+        { "alias": "Аплинк за период (ГБ)", "colorMode": null, "decimals": 3, "pattern": "Value #A", "type": "number", "unit": "none" }
+      ],
+      "targets": [
+        {
+          "expr": "topk(50, sum by (telegram_id) ( (increase(xray_traffic_uplink_bytes_total{dimension=\"user\",role=\"ru-relay\"}[$__range])) * on(target) group_left(telegram_id) max by (target, telegram_id) (rhino_vless_user_mapping) ) / 1e9)",
+          "format": "table",
+          "instant": true,
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "title": "Топ аплинка по ID Telegram (за период)",
+      "transform": "table",
+      "type": "table-old"
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "datasource": "Prometheus",
+      "description": "Высокая кардинальность: используйте короткие интервалы времени при большом числе пользователей.",
+      "fieldConfig": { "defaults": { "custom": {} }, "overrides": [] },
+      "fill": 1,
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 68 },
+      "id": 13,
+      "legend": {
+        "alignAsTable": true,
+        "avg": false,
+        "current": true,
+        "max": false,
+        "min": false,
+        "rightSide": true,
+        "show": true,
+        "total": false,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 1,
+      "nullPointMode": "null",
+      "percentage": false,
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "expr": "sum by (telegram_id) ( irate(xray_traffic_downlink_bytes_total{dimension=\"user\",role=\"ru-relay\"}[5m]) * on(target) group_left(telegram_id) max by (target, telegram_id) (rhino_vless_user_mapping) )",
+          "legendFormat": "{{telegram_id}}",
+          "refId": "A"
+        }
+      ],
+      "thresholds": [],
+      "title": "Скорость даунлинка по ID Telegram (irate; при большом числе пользователей — короткий диапазон)",
+      "tooltip": { "shared": true, "sort": 2, "value_type": "individual" },
+      "type": "graph",
+      "xaxis": { "mode": "time", "show": true },
+      "yaxes": [
+        { "format": "Bps", "label": null, "logBase": 1, "show": true },
+        { "format": "short", "show": false }
+      ]
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 76 },
+      "id": 103,
+      "panels": [],
+      "title": "Сеть RU relay (только role=ru-relay, node_exporter)",
+      "type": "row"
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "datasource": "Prometheus",
+      "fieldConfig": { "defaults": { "custom": {} }, "overrides": [] },
+      "fill": 1,
+      "gridPos": { "h": 9, "w": 24, "x": 0, "y": 77 },
+      "id": 14,
+      "legend": {
+        "alignAsTable": true,
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "rightSide": true,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "nullPointMode": "null",
+      "percentage": false,
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "expr": "sum by (server, device) (rate(node_network_receive_bytes_total{device!~\"lo|docker.*|veth.*|br-.*\",job=\"node\",role=\"ru-relay\",server=~\"$server\"}[5m]))",
+          "legendFormat": "{{server}} {{device}} приём",
+          "refId": "A"
+        },
+        {
+          "expr": "sum by (server, device) (rate(node_network_transmit_bytes_total{device!~\"lo|docker.*|veth.*|br-.*\",job=\"node\",role=\"ru-relay\",server=~\"$server\"}[5m]))",
+          "legendFormat": "{{server}} {{device}} передача",
+          "refId": "B"
+        }
+      ],
+      "thresholds": [],
+      "title": "Пропускная способность интерфейсов на RU relay",
+      "tooltip": { "shared": true, "sort": 0, "value_type": "individual" },
+      "type": "graph",
+      "xaxis": { "mode": "time", "show": true },
+      "yaxes": [
+        { "format": "Bps", "label": null, "logBase": 1, "show": true },
+        { "format": "short", "show": false }
+      ]
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 25,
+  "style": "dark",
+  "tags": ["rhino"],
+  "templating": {
+    "list": [
+      {
+        "allValue": ".*",
+        "current": { "text": "All", "value": "$__all" },
+        "datasource": "Prometheus",
+        "hide": 0,
+        "includeAll": true,
+        "label": "Сервер",
+        "multi": true,
+        "name": "server",
+        "options": [],
+        "query": "label_values(node_uname_info{job=\"node\"}, server)",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 1,
+        "type": "query"
+      }
+    ]
+  },
+  "time": { "from": "now-6h", "to": "now" },
+  "timepicker": {
+    "refresh_intervals": ["2s","10s", "30s", "1m", "5m", "15m", "30m", "1h"]
+  },
+  "timezone": "",
+  "title": "Rhino Dashboard",
+  "uid": "rhino-universal-ru",
+  "version": 1
+}

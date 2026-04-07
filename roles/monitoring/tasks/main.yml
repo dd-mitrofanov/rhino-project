@@ -68,19 +68,10 @@
     mode: "0644"
   notify: restart monitoring stack
 
-- name: Copy Node / host dashboard JSON
+- name: Copy universal Russian overview dashboard JSON
   ansible.builtin.copy:
-    src: "{{ playbook_dir }}/../configs/production/files/grafana-dashboards/node-overview.json"
-    dest: "{{ monitoring_dir }}/dashboards/node-overview.json"
-    owner: root
-    group: root
-    mode: "0644"
-  notify: restart monitoring stack
-
-- name: Copy RU traffic & Telegram dashboard JSON
-  ansible.builtin.copy:
-    src: "{{ playbook_dir }}/../configs/production/files/grafana-dashboards/rhino-traffic-telegram.json"
-    dest: "{{ monitoring_dir }}/dashboards/rhino-traffic-telegram.json"
+    src: "{{ playbook_dir }}/../configs/production/files/grafana-dashboards/rhino-universal-ru.json"
+    dest: "{{ monitoring_dir }}/dashboards/rhino-universal-ru.json"
     owner: root
     group: root
     mode: "0644"
