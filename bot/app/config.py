@@ -30,7 +30,11 @@ class Settings(BaseSettings):
 
     @property
     def ru_servers(self) -> list[dict]:
-        """Parse RU_SERVERS_JSON into a list of server dicts (tag, address, port, etc.)."""
+        """Parse RU_SERVERS_JSON into a list of server dicts (tag, address, port, etc.).
+
+        Each entry may include optional ``is_whitelist`` (boolean); when absent or false,
+        the server is treated as non-whitelist for subscription grouping and labels.
+        """
         return json.loads(self.RU_SERVERS_JSON)
 
     @property

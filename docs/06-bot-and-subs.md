@@ -16,6 +16,21 @@ The bot’s environment includes **`RU_SERVERS_JSON`**, generated at deploy time
 
 Per-subscription **Hysteria passwords** live in PostgreSQL (`subscriptions.hysteria_password`). Env **`HYSTERIA_SYNC_ENDPOINTS`** lists `address:hysteria_sync_port` for each RU; **`HYSTERIA_SYNC_TOKEN`** must match **`vault_hysteria_sync_token`** on relays.
 
+### Subscription link order and `is_whitelist`
+
+Each `ru_servers` row may set **`is_whitelist: true`** when that RU relay is operated under ISP whitelist conditions; **`false`** or omitting the key means non-whitelist (the generated JSON still carries a boolean for each server).
+
+`GET /{token}` returns links in this **fixed global order**:
+
+1. **XHTTP** (VLESS) for servers with `is_whitelist == false`
+2. **XHTTP** for servers with `is_whitelist == true`
+3. **Hysteria2** for `is_whitelist == false`
+4. **Hysteria2** for `is_whitelist == true`
+
+**Within** each of those four segments, server order is **shuffled on every request**. The **display name** after `#` in each URI (for example `1234 XHTTP` or `5678 Hysteria2 WL`) is **deterministic** for that subscription and server, so it does not change on refresh.
+
+Production shape of `ru_servers` lives in **`configs/production/vars/servers.yml`**. The **`inventories/test`** tree does not need to duplicate full `ru_servers`; local or CI tests that need this behavior can pass minimal `RU_SERVERS_JSON` fixtures including `is_whitelist`.
+
 ---
 
 ## 2. Ports and auth (typical Vault keys)

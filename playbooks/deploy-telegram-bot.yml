@@ -14,7 +14,7 @@
     - name: Build RU servers JSON for subscription API
       ansible.builtin.set_fact:
         ru_servers_json: >-
-          [{% for s in ru_servers %}{"tag":"{{ s.tag }}","address":"{{ s.address }}","port":{{ s.port }},"location":"{{ s.location }}","reality_public_key":"{{ lookup('vars', 'vault_' + (s.tag | replace('-','_')) + '_reality_public_key') }}","sni_domain":"{{ sni_domain_default }}","short_id":"{{ xray_subscription_short_id }}","hysteria_port":{{ hysteria_listen_port }},"hysteria_sni":"{{ hysteria_tls_cn }}"}{% if not loop.last %},{% endif %}{% endfor %}]
+          [{% for s in ru_servers %}{"tag":"{{ s.tag }}","address":"{{ s.address }}","port":{{ s.port }},"location":"{{ s.location }}","is_whitelist":{% if s.is_whitelist | default(false) | bool %}true{% else %}false{% endif %},"reality_public_key":"{{ lookup('vars', 'vault_' + (s.tag | replace('-','_')) + '_reality_public_key') }}","sni_domain":"{{ sni_domain_default }}","short_id":"{{ xray_subscription_short_id }}","hysteria_port":{{ hysteria_listen_port }},"hysteria_sni":"{{ hysteria_tls_cn }}"}{% if not loop.last %},{% endif %}{% endfor %}]
 
   roles:
     - role: telegram-bot

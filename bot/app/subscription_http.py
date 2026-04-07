@@ -1,8 +1,5 @@
 from __future__ import annotations
 
-import hashlib
-import random
-
 from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.responses import PlainTextResponse
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -11,17 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.config import settings
 from app.db.engine import AsyncSessionLocal
 from app.db.repositories import get_subscription_by_token
-from app.hysteria_uri import build_hysteria2_link
-from app.vless import build_vless_link
-from app.xray.sync import sync_all_subscriptions
-
-
-def _two_digit_prefix(subscription_token: str, server_tag: str) -> str:
-    """Per-subscription 00–99 from token+tag; stable on refresh, differs between users."""
-    material = f"{subscription_token}:{server_tag}".encode()
-    n = int(hashlib.sha256(material).hexdigest()[:8], 16) % 100
-    return f"{n:02d}"
-
+from app.subscription_format import build_subscription_link_lines
 
 _scheme = HTTPBearer(auto_error=False)
 
@@ -53,6 +40,8 @@ async def trigger_xray_sync(
     _: None = Depends(verify_bearer_token),
 ) -> dict[str, str]:
     """Re-push all active subscriptions to RU Xray (gRPC) and Hysteria (HTTP) (same Bearer)."""
+    from app.xray.sync import sync_all_subscriptions
+
     await sync_all_subscriptions(AsyncSessionLocal)
     return {"status": "ok"}
 
@@ -67,32 +56,10 @@ async def get_subscription(
     if not subscription:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
 
-    servers = list(settings.ru_servers)
-    random.shuffle(servers)
-    links = []
-    for server in servers:
-        base = f"{_two_digit_prefix(subscription.token, server['tag'])}-{server['tag']}"
-        links.append(
-            build_vless_link(
-                vless_uuid=str(subscription.vless_uuid),
-                server_address=server["address"],
-                server_port=server["port"],
-                reality_public_key=server["reality_public_key"],
-                sni_domain=server["sni_domain"],
-                short_id=server.get("short_id", ""),
-                server_name=f"{base}-xhttp",
-            )
-        )
-    for server in servers:
-        base = f"{_two_digit_prefix(subscription.token, server['tag'])}-{server['tag']}"
-        links.append(
-            build_hysteria2_link(
-                username=subscription.token,
-                password=subscription.hysteria_password,
-                server_address=server["address"],
-                server_port=int(server["hysteria_port"]),
-                sni=str(server["hysteria_sni"]),
-                server_name=f"{base}-hysteria-2",
-            )
-        )
+    links = build_subscription_link_lines(
+        subscription_token=subscription.token,
+        vless_uuid=str(subscription.vless_uuid),
+        hysteria_password=subscription.hysteria_password,
+        servers=list(settings.ru_servers),
+    )
     return PlainTextResponse("\n".join(links) + "\n")

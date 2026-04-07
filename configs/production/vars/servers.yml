@@ -18,11 +18,14 @@ ru_servers:
     address: "{{ vault_ru_msk_1_ip }}"
     port: 443
     location: moscow
+    is_whitelist: false
   - tag: ru-spb-1
     address: "{{ vault_ru_spb_1_ip }}"
     port: 443
     location: saint-petersburg
+    is_whitelist: false
   - tag: ru-msk-3
     address: "{{ vault_ru_msk_3_ip }}"
     port: 443
     location: moscow
+    is_whitelist: true
