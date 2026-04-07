@@ -76,6 +76,7 @@ def test_build_subscription_lines_segment_order_and_no_legacy_names() -> None:
         vless_uuid="550e8400-e29b-41d4-a716-446655440000",
         hysteria_password="pw",
         servers=servers,
+        subscription_is_whitelist=True,
     )
     assert len(lines) == 6
 
@@ -108,7 +109,47 @@ def test_shuffle_receives_copy_not_original_partition() -> None:
             vless_uuid="550e8400-e29b-41d4-a716-446655440000",
             hysteria_password="p",
             servers=servers,
+            subscription_is_whitelist=True,
         )
 
     assert len(seen) == 4
     assert id(servers) not in seen
+
+
+@patch("app.subscription_format.random.shuffle", lambda x: None)
+def test_build_subscription_lines_restricted_key_excludes_whitelist_servers() -> None:
+    servers = [
+        _server("wl-only", wl=True),
+        _server("n1", wl=False),
+        _server("n2", wl=False),
+    ]
+    lines = build_subscription_link_lines(
+        subscription_token="subtok",
+        vless_uuid="550e8400-e29b-41d4-a716-446655440000",
+        hysteria_password="pw",
+        servers=servers,
+        subscription_is_whitelist=False,
+    )
+    assert len(lines) == 4
+
+    def frag(line: str) -> str:
+        return unquote(line.split("#", 1)[1])
+
+    for line in lines:
+        f = frag(line)
+        assert not f.endswith(" XHTTP WL")
+        assert not f.endswith(" Hysteria2 WL")
+        assert f.endswith(" XHTTP") or f.endswith(" Hysteria2")
+
+
+@patch("app.subscription_format.random.shuffle", lambda x: None)
+def test_build_subscription_lines_restricted_key_all_whitelist_servers_empty() -> None:
+    servers = [_server("w1", wl=True), _server("w2", wl=True)]
+    lines = build_subscription_link_lines(
+        subscription_token="subtok",
+        vless_uuid="550e8400-e29b-41d4-a716-446655440000",
+        hysteria_password="pw",
+        servers=servers,
+        subscription_is_whitelist=False,
+    )
+    assert lines == []

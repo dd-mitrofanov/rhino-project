@@ -18,7 +18,7 @@ For deployment and operations, see [02-first-deploy.md](02-first-deploy.md) and 
 ## 2. Topology (two relay levels)
 
 ```
-Client (subscription lists all RU relays)
+Client (subscription from bot)
     │
     ▼
 ┌─────────────────────┐
@@ -35,6 +35,8 @@ Client (subscription lists all RU relays)
           ▼
       Internet
 ```
+
+Which RU relays appear in the subscription plaintext depends on the key (**`subscriptions.is_whitelist`** and server-level flags); see [06-bot-and-subs.md](06-bot-and-subs.md).
 
 **Important:** All exit selection, observatory probes, and balancer logic run **on the RU relays**. Foreign servers only terminate the inner tunnel and forward to the open internet.
 

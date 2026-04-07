@@ -244,6 +244,7 @@ async def create_subscription(
         label=label,
         token=uuid.uuid4().hex,
         hysteria_password=secrets.token_urlsafe(32),
+        is_whitelist=True,
     )
     session.add(subscription)
     await session.flush()

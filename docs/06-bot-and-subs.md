@@ -14,18 +14,35 @@ The **Telegram bot** and **PostgreSQL** run on the **`telegram_bot`** host (defa
 
 The bot’s environment includes **`RU_SERVERS_JSON`**, generated at deploy time from `ru_servers` in `configs/production/vars/servers.yml`, Reality public keys from Vault, and **Hysteria** fields (`hysteria_port`, `hysteria_sni` from `configs/production/vars/hysteria.yml`) — see `playbooks/deploy-telegram-bot.yml`.
 
-Per-subscription **Hysteria passwords** live in PostgreSQL (`subscriptions.hysteria_password`). Env **`HYSTERIA_SYNC_ENDPOINTS`** lists `address:hysteria_sync_port` for each RU; **`HYSTERIA_SYNC_TOKEN`** must match **`vault_hysteria_sync_token`** on relays.
+Per-subscription fields in PostgreSQL include **`subscriptions.hysteria_password`** and **`subscriptions.is_whitelist`** (see [Subscription link order and is_whitelist](#subscription-link-order-and-is_whitelist)). Env **`HYSTERIA_SYNC_ENDPOINTS`** lists `address:hysteria_sync_port` for each RU; **`HYSTERIA_SYNC_TOKEN`** must match **`vault_hysteria_sync_token`** on relays.
 
 ### Subscription link order and `is_whitelist`
 
+The bot uses the word **`is_whitelist`** in two **independent** places. Server-level flags partition relays into segments; subscription-level flags decide whether the user sees the **full** inventory or **only non-whitelist** relays.
+
+#### Server-level (`RU_SERVERS_JSON` / `ru_servers`)
+
 Each `ru_servers` row may set **`is_whitelist: true`** when that RU relay is operated under ISP whitelist conditions; **`false`** or omitting the key means non-whitelist (the generated JSON still carries a boolean for each server).
 
-`GET /{token}` returns links in this **fixed global order**:
+This controls **which segment** (non-WL vs WL) a relay belongs to when building the list from the **full** `RU_SERVERS_JSON` inventory.
 
-1. **XHTTP** (VLESS) for servers with `is_whitelist == false`
-2. **XHTTP** for servers with `is_whitelist == true`
-3. **Hysteria2** for `is_whitelist == false`
-4. **Hysteria2** for `is_whitelist == true`
+#### Per-subscription access (`subscriptions.is_whitelist` in PostgreSQL)
+
+Column **`subscriptions.is_whitelist`** applies to the **subscription key**, not to Ansible rows:
+
+- **`true`**: **Full access** — the response includes **all** relays from `RU_SERVERS_JSON`, ordered and labeled using server-level `is_whitelist` as in the four segments below (same behavior as before this column existed).
+- **`false`**: **Restricted** — the bot first keeps only servers that are **not** server-whitelist under the same rule as in code (`_is_whitelist` in `bot/app/subscription_format.py`: only explicit **`true`** on the server dict counts as WL; missing / null / **`false`** are non-WL). It then runs the **identical** four-segment pipeline on that reduced set. **Whitelist segments are empty** (no lines for WL XHTTP / WL Hysteria2), but the **global order is unchanged**: non-WL XHTTP, then WL XHTTP, then non-WL Hysteria2, then WL Hysteria2.
+
+**Defaults:** **New** subscriptions and **migrated** existing rows use **`subscriptions.is_whitelist = true`** until an operator updates the row (for example via SQL; a bot command may be added later). There is **no** implied guarantee that every key always sees every relay — check the DB column for restricted tiers.
+
+#### Fixed global segment order
+
+For the server list in play (full inventory or post-filter for restricted keys), `GET /{token}` emits links in this **fixed global order**:
+
+1. **XHTTP** (VLESS) for servers with server-level `is_whitelist == false`
+2. **XHTTP** (VLESS) for servers with server-level `is_whitelist == true`
+3. **Hysteria2** for server-level `is_whitelist == false`
+4. **Hysteria2** for server-level `is_whitelist == true`
 
 **Within** each of those four segments, server order is **shuffled on every request**. The **display name** after `#` in each URI (for example `1234 XHTTP` or `5678 Hysteria2 WL`) is **deterministic** for that subscription and server, so it does not change on refresh.
 

@@ -54,7 +54,7 @@ Vault naming: tag `ru-ekb-1` → variables like `vault_ru_ekb_1_ip`, `vault_ru_e
 
    Or for the whole RU group: `make setup` / `make deploy-ru` with appropriate `--limit`.
 
-9. **Refresh subscription data** so clients get the new node in `vless://` links:
+9. **Refresh subscription data** so subscription plaintext is rebuilt from the updated **`RU_SERVERS_JSON`** (users with **`subscriptions.is_whitelist = true`** see the new relay when it matches their tier; **restricted** keys — **`subscriptions.is_whitelist = false`** — only see relays that are not server-whitelist in JSON; see [06-bot-and-subs.md](06-bot-and-subs.md)):
 
    ```bash
    make deploy-telegram

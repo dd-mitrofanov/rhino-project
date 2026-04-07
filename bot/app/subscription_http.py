@@ -61,5 +61,6 @@ async def get_subscription(
         vless_uuid=str(subscription.vless_uuid),
         hysteria_password=subscription.hysteria_password,
         servers=list(settings.ru_servers),
+        subscription_is_whitelist=subscription.is_whitelist,
     )
     return PlainTextResponse("\n".join(links) + "\n")

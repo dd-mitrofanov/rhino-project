@@ -9,7 +9,7 @@ This aligns with the architecture in [docs/01-arch-overview.md](../01-arch-overv
 ## Global goal
 
 - Each RU server is optionally marked **`is_whitelist`** in Git/Ansible and in **`RU_SERVERS_JSON`**.
-- **`GET /{token}`** returns links in the four-group order below, with random **within-group** shuffling each request.
+- **`GET /{token}`** uses the four-group order below for whatever server set applies to that key (full inventory vs restricted — see **`subscriptions.is_whitelist`** in [docs/06-bot-and-subs.md](../06-bot-and-subs.md)), with random **within-group** shuffling each request.
 - Fragment display names follow only the four documented patterns, with **`{n}`** from a **deterministic** hash (same spirit as `_two_digit_prefix`).
 - Legacy naming patterns are removed from subscription output.
 - Configuration and user-facing docs reflect the new field and behavior.

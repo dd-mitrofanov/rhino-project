@@ -4,7 +4,8 @@
 
 Add a **short** subsection to **`docs/06-bot-and-subs.md`** covering:
 
-- The **`is_whitelist`** flag (source: **`configs/production/vars/servers.yml`** → **`RU_SERVERS_JSON`**).
+- The **server-level** **`is_whitelist`** flag (source: **`configs/production/vars/servers.yml`** → **`RU_SERVERS_JSON`**).
+- **Per-subscription** **`subscriptions.is_whitelist`** in PostgreSQL (full vs restricted plaintext) — see current **`docs/06-bot-and-subs.md`** for the canonical operator description.
 - The **global link order** (four groups: XHTTP non-WL, XHTTP WL, Hysteria2 non-WL, Hysteria2 WL).
 - That **within** each group, order is **randomized per request**; display names are **deterministic** (stable on refresh).
 
